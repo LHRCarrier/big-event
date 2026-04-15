@@ -9,4 +9,11 @@ public interface UserMapper {
     void add(User user);
     @Select("select * from user where username = #{username}")
     User searchByUsername(String username);
+
+    /**
+     * 条件动态查询用户信息
+     * @param user
+     * @return
+     */
+    com.bubbles.pojo.vo.UserVO getInfoConditional(User user);
 }

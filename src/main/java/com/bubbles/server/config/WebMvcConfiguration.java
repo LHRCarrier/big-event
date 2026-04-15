@@ -6,6 +6,8 @@ import com.bubbles.server.interceptor.JwtTokenUserInterceptor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import lombok.extern.slf4j.Slf4j;
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,11 +64,36 @@ public class WebMvcConfiguration implements WebMvcConfigurer {
      */
     @Bean
     public OpenAPI customOpenAPI() {
+        // 定义管理员认证方案
+        SecurityScheme adminSecurityScheme = new SecurityScheme()
+                .type(SecurityScheme.Type.HTTP)
+                .scheme("bearer")
+                .bearerFormat("JWT")
+                .name("token")
+                .in(SecurityScheme.In.HEADER);
+        
+        // 定义用户认证方案
+        SecurityScheme userSecurityScheme = new SecurityScheme()
+                .type(SecurityScheme.Type.HTTP)
+                .scheme("bearer")
+                .bearerFormat("JWT")
+                .name("Authentication")
+                .in(SecurityScheme.In.HEADER);
+        
+        // 添加认证要求
+        SecurityRequirement adminSecurityRequirement = new SecurityRequirement().addList("adminAuth");
+        SecurityRequirement userSecurityRequirement = new SecurityRequirement().addList("userAuth");
+        
         return new OpenAPI()
                 .info(new Info()
                         .title("大事件项目接口文档")
                         .version("2.0")
-                        .description("大事件项目接口文档"));
+                        .description("大事件项目接口文档"))
+                .addSecurityItem(adminSecurityRequirement)
+                .addSecurityItem(userSecurityRequirement)
+                .components(new io.swagger.v3.oas.models.Components()
+                        .addSecuritySchemes("adminAuth", adminSecurityScheme)
+                        .addSecuritySchemes("userAuth", userSecurityScheme));
     }
 
     /**

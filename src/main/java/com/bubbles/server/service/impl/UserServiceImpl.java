@@ -1,5 +1,6 @@
 package com.bubbles.server.service.impl;
 
+import com.bubbles.pojo.vo.UserVO;
 import com.bubbles.server.mapper.UserMapper;
 import com.bubbles.server.service.UserService;
 import com.bubbles.pojo.entity.User;
@@ -26,5 +27,14 @@ public class UserServiceImpl implements UserService {
      */
     public User search(String username) {
         return userMapper.searchByUsername(username);
+    }
+
+    /**
+     * 条件查询用户信息
+     * @param user
+     * @return
+     */
+    public UserVO listInfo(User user) {
+        return userMapper.getInfoConditional(user);
     }
 }

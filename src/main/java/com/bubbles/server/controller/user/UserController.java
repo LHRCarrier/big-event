@@ -1,7 +1,9 @@
 package com.bubbles.server.controller.user;
 
 import com.bubbles.common.Result;
+import com.bubbles.common.context.BaseContext;
 import com.bubbles.pojo.vo.UserLoginVO;
+import com.bubbles.pojo.vo.UserVO;
 import com.bubbles.server.service.UserService;
 import com.bubbles.pojo.entity.User;
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,6 +17,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.util.DigestUtils;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -37,6 +40,12 @@ public class UserController {
     @Autowired
     private JwtEncoder jwtEncoder;
 
+    /**
+     * 用户注册
+     * @param username
+     * @param password
+     * @return
+     */
     @PostMapping("/user/register")
     @Operation(summary="用户注册",description = "")
     public Result register(String username, String password){
@@ -56,9 +65,16 @@ public class UserController {
             return Result.error("用户名已占用");
         }
     }
+
+    /**
+     * 用户登录
+     * @param username
+     * @param password
+     * @return
+     */
     @PostMapping("/user/login")
     @Operation(summary = "登录",description = "")
-    public Result<Map<String, String>> login(String username, String password){
+    public Result<UserLoginVO> login(String username, String password){
         User user = userService.search(username);
         if(user==null){
             return Result.error("用户名错误");
@@ -81,6 +97,7 @@ public class UserController {
                     .issuedAt(now)
                     .expiresAt(now.plus(1, ChronoUnit.HOURS))
                     .claim("authorities", "ROLE_USER")
+                    .claim("userId", user.getId())
                     .build();
 
             Jwt jwt = jwtEncoder.encode(org.springframework.security.oauth2.jwt.JwtEncoderParameters.from(claimsSet));
@@ -88,9 +105,27 @@ public class UserController {
             tokenMap.put("access_token", jwt.getTokenValue());
             tokenMap.put("token_type", "Bearer");
             tokenMap.put("expires_in", String.valueOf(jwt.getExpiresAt().getEpochSecond() - System.currentTimeMillis() / 1000));
-            return Result.success(tokenMap);
+            String token = tokenMap.get("access_token");
+
+            UserLoginVO userLoginVO = UserLoginVO.builder()
+                    .id(user.getId())
+                    .username(user.getUsername())
+                    .nickname(user.getNickname())
+                    .token(token)
+                    .build();
+            return Result.success(userLoginVO);
         }
         return Result.error("密码错误");
+    }
+    @GetMapping("/user/userInfo")
+    @Operation(summary = "获取用户详细信息",description = "获取用户详细信息")
+    public Result<UserVO> getUserInfo(){
+        Long userId = BaseContext.getCurrentId();
+        log.info("正在查询当前用户信息,用户id{}...",userId);
+        User user =new User();
+        user.setId(userId);
+        UserVO userVO = userService.listInfo(user);
+        return Result.success(userVO);
     }
 
 }

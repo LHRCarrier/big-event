@@ -41,6 +41,14 @@ public class JwtTokenUserInterceptor implements HandlerInterceptor {
 
         // 1、从请求头中获取令牌
         String token = request.getHeader(jwtProperties.getUserTokenName());
+        // 如果没有从配置的header中获取到token，尝试从Authorization header中获取
+        if (token == null) {
+            token = request.getHeader("Authorization");
+            // 如果Authorization header包含"Bearer "前缀，移除它
+            if (token != null && token.startsWith("Bearer ")) {
+                token = token.substring(7);
+            }
+        }
         System.out.println("获取到的令牌:" + token);
 
         // 2、使用 JwtDecoder 校验令牌并解析 Claims

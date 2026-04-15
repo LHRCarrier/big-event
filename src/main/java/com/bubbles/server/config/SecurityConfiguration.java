@@ -15,22 +15,22 @@ public class SecurityConfiguration {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+            .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(authorize -> authorize
-                    .requestMatchers("/user/user/login", "/user/user/register").permitAll()
-                    .requestMatchers("/doc.html", "/webjars/**", "/v3/api-docs/**").permitAll()
-                    .requestMatchers("/oauth2/**", "/login/**").permitAll()
+                    .requestMatchers("/doc.html").permitAll()
+                    .requestMatchers("/webjars/**").permitAll()
+                    .requestMatchers("/v3/api-docs/**").permitAll()
+                    .requestMatchers("/swagger-ui/**").permitAll()
+                    .requestMatchers("/user/user/login").permitAll()
+                    .requestMatchers("/user/user/register").permitAll()
+                    .requestMatchers("/oauth2/**").permitAll()
                     .anyRequest().authenticated()
             )
             .oauth2ResourceServer(oauth2 -> oauth2
                     .jwt(jwt -> jwt
                             .jwtAuthenticationConverter(jwtAuthenticationConverter())
                     )
-            )
-            .formLogin(formLogin -> formLogin
-                    .loginPage("/login")
-                    .permitAll()
-            )
-            .csrf(csrf -> csrf.disable());
+            );
 
         return http.build();
     }
