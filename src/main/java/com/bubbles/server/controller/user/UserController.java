@@ -3,6 +3,7 @@ package com.bubbles.server.controller.user;
 import com.bubbles.common.Result;
 import com.bubbles.common.context.BaseContext;
 import com.bubbles.pojo.dto.UserDTO;
+import com.bubbles.pojo.dto.UserLoginDTO;
 import com.bubbles.pojo.vo.UserLoginVO;
 import com.bubbles.pojo.vo.UserVO;
 import com.bubbles.server.service.UserService;
@@ -69,24 +70,24 @@ public class UserController {
 
     /**
      * 用户登录
-     * @param username
-     * @param password
+     * @param userLoginDTO
+     *
      * @return
      */
     @PostMapping("/user/login")
     @Operation(summary = "登录",description = "")
-    public Result<UserLoginVO> login(String username, String password){
-        User user = userService.search(username);
+    public Result<UserLoginVO> login(UserLoginDTO userLoginDTO){
+        User user = userService.search(userLoginDTO.getUsername());
         if(user==null){
             return Result.error("用户名错误");
         }
-        String md5Password = DigestUtils.md5DigestAsHex(password.getBytes());
+        String md5Password = DigestUtils.md5DigestAsHex((userLoginDTO.getPassword()).getBytes());
 
         if(user.getPassword().equals(md5Password)){
             // 构建认证对象
             Authentication authentication = new UsernamePasswordAuthenticationToken(
-                    username,
-                    password,
+                    userLoginDTO.getUsername(),
+                    userLoginDTO.getPassword(),
                     Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
             );
             SecurityContextHolder.getContext().setAuthentication(authentication);

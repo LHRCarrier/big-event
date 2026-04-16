@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Data
 @Builder
-public class Artical {
+public class Article {
     private Long id;
     private String title;
     private String content;

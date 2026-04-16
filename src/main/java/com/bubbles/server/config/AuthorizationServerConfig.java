@@ -25,8 +25,8 @@ public class AuthorizationServerConfig {
         RegisteredClient registeredClient = RegisteredClient.withId(UUID.randomUUID().toString())
                 .clientId("big-event-client")
                 .clientSecret("{noop}big-event-secret")
-                .redirectUri("http://localhost:8080/login/oauth2/code/big-event-client")//为什么我这里访问doc.html时也给我重定向到login里了
-                .scope("read")//该网页无法正常运作 localhost 将您重定向的次数过多。 错误代码：ERR_TOO_MANY_REDIRECTS
+                .redirectUri("http://localhost:8080/login/oauth2/code/big-event-client")
+                .scope("read")
                 .scope("write")
                 .clientSettings(ClientSettings.builder().requireAuthorizationConsent(false).build())
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)

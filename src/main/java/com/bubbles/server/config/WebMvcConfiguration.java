@@ -13,6 +13,7 @@ import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -41,7 +42,7 @@ public class WebMvcConfiguration implements WebMvcConfigurer {
                 .addPathPatterns("/admin/**")
                 .excludePathPatterns("/admin/employee/login");
         registry.addInterceptor(jwtTokenUserInterceptor)
-                .addPathPatterns("/user/**")
+                .addPathPatterns("/user/**", "/article/**")
                 .excludePathPatterns("/user/user/register", "/user/user/login");
     }
 
@@ -129,4 +130,18 @@ public class WebMvcConfiguration implements WebMvcConfigurer {
         log.info("创建自定义 ObjectMapper...");
         return new JacksonObjectMapper();
     }
+
+    /** TODO
+     * 配置 CORS 跨域请求支持
+     */
+//    @Override
+//    public void addCorsMappings(CorsRegistry registry) {
+//        log.info("开始配置 CORS 跨域请求支持...");
+//        registry.addMapping("/**")
+//
+//                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+//                .allowedHeaders("*")
+//                .allowCredentials(true)
+//                .maxAge(3600);
+//    }
 }

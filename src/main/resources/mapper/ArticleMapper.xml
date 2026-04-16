@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.bubbles.server.mapper.ArticleMapper">
+
+    <insert id="add">
+        insert into article(title, content, cover_img, category_id, create_user, create_time, update_time)
+        VALUES (#{title},#{content},#{coverImg},#{categoryId},#{createUser},#{createTime},#{updateTime})
+    </insert>
+    <insert id="category">
+        insert into category(category_name, category_alias, create_user, create_time, update_time)
+        VALUES (#{categoryName},#{categoryAlias},#{createUser},#{createTime},#{updateTime})
+    </insert>
+</mapper>
