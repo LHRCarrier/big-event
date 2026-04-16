@@ -2,12 +2,15 @@ package com.bubbles.server.controller.user;
 
 import com.bubbles.common.Result;
 import com.bubbles.common.context.BaseContext;
+import com.bubbles.pojo.dto.UserDTO;
 import com.bubbles.pojo.vo.UserLoginVO;
 import com.bubbles.pojo.vo.UserVO;
 import com.bubbles.server.service.UserService;
 import com.bubbles.pojo.entity.User;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.web.bind.annotation.RequestBody;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -17,10 +20,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.util.DigestUtils;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -28,6 +28,7 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/user")
@@ -117,15 +118,34 @@ public class UserController {
         }
         return Result.error("密码错误");
     }
+
+    /**
+     * 获取当前用户的详细信息
+     * @return
+     */
     @GetMapping("/user/userInfo")
     @Operation(summary = "获取用户详细信息",description = "获取用户详细信息")
     public Result<UserVO> getUserInfo(){
         Long userId = BaseContext.getCurrentId();
-        log.info("正在查询当前用户信息,用户id{}...",userId);
+        log.info("正在查询当前用户信息 ,用户id{}...",userId);
         User user =new User();
         user.setId(userId);
         UserVO userVO = userService.listInfo(user);
         return Result.success(userVO);
+    }
+
+    /**
+     * 更新用户信息:当前用户
+     * @param userDTO
+     * @return
+     */
+    @PutMapping("/user/update")
+    @Operation(summary = "更新用户基本信息")
+    public Result updateInfo(@RequestBody UserDTO userDTO){
+        //注意这里还需要添加传入的 username 和 nickname 的格式验证
+
+        userService.update(userDTO);
+        return Result.success("信息编辑成功");
     }
 
 }

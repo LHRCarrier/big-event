@@ -1,5 +1,6 @@
 package com.bubbles.server.service;
 
+import com.bubbles.pojo.dto.UserDTO;
 import com.bubbles.pojo.entity.User;
 import com.bubbles.pojo.vo.UserVO;
 
@@ -23,4 +24,10 @@ public interface UserService {
      * @return
      */
     UserVO listInfo(User user);
+
+    /**
+     * 更新用户信息
+     * @param userDTO
+     */
+    void update(UserDTO userDTO);
 }
