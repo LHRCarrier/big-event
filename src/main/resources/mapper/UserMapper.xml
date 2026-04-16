@@ -18,4 +18,17 @@
         order by create_time desc;
     </select>
 
+    <update id="update">
+        update user
+        <set>
+            <if test="username != null">username = #{username},</if>
+            <if test="nickname != null">nickname = #{nickname},</if>
+            <if test="email != null">email = #{email},</if>
+            <if test="userPic != null">user_pic = #{userPic},</if>
+            <if test="role != null">role = #{role},</if>
+            <if test="updateTime != null">update_time = #{updateTime}</if>
+        </set>
+        where id = #{id}
+    </update>
+
 </mapper>

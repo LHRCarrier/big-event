@@ -16,4 +16,10 @@ public interface UserMapper {
      * @return
      */
     com.bubbles.pojo.vo.UserVO getInfoConditional(User user);
+
+    /**
+     * 更新用户信息
+     * @param user
+     */
+    void update(User user);
 }
