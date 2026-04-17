@@ -1,6 +1,7 @@
 package com.bubbles.server.mapper;
 
 import com.bubbles.pojo.entity.User;
+import com.bubbles.pojo.vo.UserVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 
@@ -15,11 +16,19 @@ public interface UserMapper {
      * @param user
      * @return
      */
-    com.bubbles.pojo.vo.UserVO getInfoConditional(User user);
+    UserVO getInfoConditional(User user);
 
     /**
      * 更新用户信息
      * @param user
      */
     void update(User user);
+
+    /**
+     * 查询密码
+     * @param currentId
+     * @return
+     */
+    @Select("select user.password from user where id = #{id}")
+    String getPasswordById(Long currentId);
 }

@@ -2,6 +2,7 @@ package com.bubbles.server.controller.user;
 
 import com.bubbles.common.Result;
 import com.bubbles.common.context.BaseContext;
+import com.bubbles.pojo.dto.PasswordUpdateDTO;
 import com.bubbles.pojo.dto.UserDTO;
 import com.bubbles.pojo.dto.UserLoginDTO;
 import com.bubbles.pojo.vo.UserLoginVO;
@@ -10,6 +11,7 @@ import com.bubbles.server.service.UserService;
 import com.bubbles.pojo.entity.User;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestBody;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -141,12 +143,33 @@ public class UserController {
      * @return
      */
     @PutMapping("/user/update")
-    @Operation(summary = "更新用户基本信息")
-    public Result updateInfo(@RequestBody UserDTO userDTO){
-        //注意这里还需要添加传入的 username 和 nickname 的格式验证
-
+    @Operation(summary = "更新用户基本信息",description = "更新用户头像")
+    public Result updateInfo(@RequestBody @Validated UserDTO userDTO){
         userService.update(userDTO);
         return Result.success("信息编辑成功");
     }
 
+    /**
+     * 修改头像
+     * @param avatarUrl
+     * @return
+     */
+    @PutMapping("/user/updateAvatar")
+    @Operation(summary = "更新用户头像",description = "更新用户头像")
+    public Result updateAvatar(String avatarUrl){
+        userService.updateAvatar(avatarUrl);
+        return Result.success("头像修改成功");
+    }
+
+    /**
+     * 修改用户密码
+     * @param passwordUpdateDTO
+     * @return
+     */
+    @PutMapping("/user/updatePassword")
+    @Operation(summary = "修改密码",description = "修改密码")
+    public Result updatePassword(PasswordUpdateDTO passwordUpdateDTO){
+        userService.updatePassword(passwordUpdateDTO);
+        return  Result.success("密码已修改成功!");
+    }
 }
