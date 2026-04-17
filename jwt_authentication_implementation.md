@@ -425,7 +425,7 @@ public class SecurityConfiguration {
 ```java
 package com.bubbles.server.controller.user;
 
-import com.bubbles.common.Result;
+import com.bubbles.common.result.Result;
 import com.bubbles.pojo.vo.UserLoginVO;
 import com.bubbles.server.service.UserService;
 import com.bubbles.pojo.entity.User;
@@ -444,53 +444,54 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/user")
 @Slf4j
-@Tag(name="用户相关接口",description = "包含注册，登录，及个人信息的增删改查")
+@Tag(name = "用户相关接口", description = "包含注册，登录，及个人信息的增删改查")
 public class UserController {
-    @Autowired
-    private UserService userService;
+   @Autowired
+   private UserService userService;
 
-    @PostMapping("/user/register")
-    @Operation(summary="用户注册",description = "")
-    public Result register(String username, String password){
-        String md5Password = DigestUtils.md5DigestAsHex(password.getBytes());
+   @PostMapping("/user/register")
+   @Operation(summary = "用户注册", description = "")
+   public Result register(String username, String password) {
+      String md5Password = DigestUtils.md5DigestAsHex(password.getBytes());
 
-        User u = userService.search(username);
+      User u = userService.search(username);
 
-        if(u==null){
-            User user = new User();
-            user.setPassword(md5Password);
-            user.setUsername(username);
-            user.setCreateTime(LocalDateTime.now());
-            user.setUpdateTime(LocalDateTime.now());
-            userService.register(user);
-            return Result.success("注册成功");
-        }else{
-            return Result.error("用户名已占用");
-        }
-    }
-    @PostMapping("/user/login")
-    @Operation(summary = "登录",description = "")
-    public Result<UserLoginVO> login(String username,String password){
-        User user = userService.search(username);
-        if(user==null){
-            return Result.error("用户名错误");
-        }
-        String md5Password = DigestUtils.md5DigestAsHex(password.getBytes());
+      if (u == null) {
+         User user = new User();
+         user.setPassword(md5Password);
+         user.setUsername(username);
+         user.setCreateTime(LocalDateTime.now());
+         user.setUpdateTime(LocalDateTime.now());
+         userService.register(user);
+         return Result.success("注册成功");
+      } else {
+         return Result.error("用户名已占用");
+      }
+   }
 
-        if(user.getPassword().equals(md5Password)){
-            // 生成简单的令牌
-            String token = UUID.randomUUID().toString();
+   @PostMapping("/user/login")
+   @Operation(summary = "登录", description = "")
+   public Result<UserLoginVO> login(String username, String password) {
+      User user = userService.search(username);
+      if (user == null) {
+         return Result.error("用户名错误");
+      }
+      String md5Password = DigestUtils.md5DigestAsHex(password.getBytes());
 
-            UserLoginVO userLoginVO = new UserLoginVO();
-            userLoginVO.setId(user.getId());
-            userLoginVO.setUserName(user.getUsername());
-            userLoginVO.setName(user.getUsername());
-            userLoginVO.setToken(token);
-            return Result.success(userLoginVO);
+      if (user.getPassword().equals(md5Password)) {
+         // 生成简单的令牌
+         String token = UUID.randomUUID().toString();
 
-        }
-        return  Result.error("密码错误");
-    }
+         UserLoginVO userLoginVO = new UserLoginVO();
+         userLoginVO.setId(user.getId());
+         userLoginVO.setUserName(user.getUsername());
+         userLoginVO.setName(user.getUsername());
+         userLoginVO.setToken(token);
+         return Result.success(userLoginVO);
+
+      }
+      return Result.error("密码错误");
+   }
 }
 ```
 

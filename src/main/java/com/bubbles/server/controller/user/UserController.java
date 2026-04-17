@@ -1,6 +1,6 @@
 package com.bubbles.server.controller.user;
 
-import com.bubbles.common.Result;
+import com.bubbles.common.result.Result;
 import com.bubbles.common.context.BaseContext;
 import com.bubbles.pojo.dto.PasswordUpdateDTO;
 import com.bubbles.pojo.dto.UserDTO;
@@ -13,7 +13,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestBody;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -31,7 +30,6 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/user")

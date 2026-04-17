@@ -10,9 +10,4 @@ public interface ArticleService {
      */
     void addArticle(ArticleDTO articleDTO);
 
-    /**
-     * 新增文章分类
-     * @param articleCategoryDTO
-     */
-    void addCategory(ArticleCategoryDTO articleCategoryDTO);
 }

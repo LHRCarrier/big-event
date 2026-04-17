@@ -1,7 +1,6 @@
 package com.bubbles.server.controller.user;
 
-import com.bubbles.common.Result;
-import com.bubbles.pojo.dto.ArticleCategoryDTO;
+import com.bubbles.common.result.Result;
 import com.bubbles.pojo.dto.ArticleDTO;
 import com.bubbles.server.service.ArticleService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,21 +29,7 @@ public class ArticleController {
         articleService.addArticle(articleDTO);
         return Result.success("文章新增成功！");
     }
-    @PostMapping("/category")
-    @Operation(summary = "新增文章分类",description = "新增文章分类")
-    public Result category(@RequestBody ArticleCategoryDTO articleCategoryDTO){
-        log.info("新增文章分类请求:articleCategoryDTO: {}", articleCategoryDTO);
-        articleService.addCategory(articleCategoryDTO);
-        return  Result.success("新增文章分类操作成功！");
-    }
-    /**
-     * 查询文章
-     * @return
-     */
-    @GetMapping("/list")
-    public Result<String> list(){
-        return Result.success("<UNK>");
-    }
+
 
     @PutMapping("/update")
     public Result<String> update(){

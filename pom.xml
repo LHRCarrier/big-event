@@ -12,8 +12,8 @@
     <groupId>com.bubbles</groupId>
     <artifactId>big-event</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>bit-event</name>
-    <description>bit-event</description>
+    <name>big-event</name>
+    <description>big-event</description>
     <url/>
     <licenses>
         <license/>
@@ -125,6 +125,19 @@
             <version>0.12.5</version>
             <scope>runtime</scope>
         </dependency>
+        <!-- pageHelper  -->
+        <dependency>
+            <groupId>com.github.pagehelper</groupId>
+            <artifactId>pagehelper-spring-boot-starter</artifactId>
+            <version> 1.4.7</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.mybatis.spring.boot</groupId>
+                    <artifactId>mybatis-spring-boot-starter</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
     </dependencies>
 
     <build>

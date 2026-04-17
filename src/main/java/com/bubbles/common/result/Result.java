@@ -1,4 +1,4 @@
-package com.bubbles.common;
+package com.bubbles.common.result;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

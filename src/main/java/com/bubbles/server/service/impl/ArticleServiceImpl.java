@@ -37,17 +37,4 @@ public class ArticleServiceImpl implements ArticleService {
         log.info("文章插入成功");
     }
 
-    /**
-     * 新增文章分类
-     * @param articleCategoryDTO
-     */
-    public void addCategory(ArticleCategoryDTO articleCategoryDTO) {
-        Long currentId = BaseContext.getCurrentId();
-        Category category = new Category();
-        BeanUtils.copyProperties(articleCategoryDTO,category);
-        category.setCreateUser(currentId);
-        category.setCreateTime(LocalDateTime.now());
-        category.setUpdateTime(LocalDateTime.now());
-        articleMapper.category(category);
-    }
 }

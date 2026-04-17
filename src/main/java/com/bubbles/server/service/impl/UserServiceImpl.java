@@ -1,6 +1,5 @@
 package com.bubbles.server.service.impl;
 
-import com.bubbles.common.Result;
 import com.bubbles.common.context.BaseContext;
 import com.bubbles.common.exception.BaseException;
 import com.bubbles.pojo.dto.PasswordUpdateDTO;

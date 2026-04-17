@@ -14,9 +14,5 @@ public interface ArticleMapper {
      */
     void add(Article article);
 
-    /**
-     * 新增文章分类
-     * @param category
-     */
-    void category(Category category);
+
 }

@@ -2,7 +2,7 @@ package com.bubbles.server.handler;
 
 import com.bubbles.common.constant.MessageConstant;
 import com.bubbles.common.exception.BaseException;
-import com.bubbles.common.Result;
+import com.bubbles.common.result.Result;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
