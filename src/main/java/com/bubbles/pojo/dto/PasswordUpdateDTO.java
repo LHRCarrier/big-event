@@ -10,9 +10,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @NotNull
-@Pattern(regexp="^\\${5,16}")
+
 public class PasswordUpdateDTO {
     private String oldPassword;
+    @Pattern(regexp="^.{5,16}$")
     private String password;
     private String confirmNewPassword;
 }

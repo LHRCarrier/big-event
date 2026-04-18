@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ArticleCategoryDTO {
+    private Long id;
     private String categoryName;
     private String categoryAlias;
 }

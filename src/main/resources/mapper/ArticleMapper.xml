@@ -7,8 +7,29 @@
         insert into article(title, content, cover_img, category_id, create_user, create_time, update_time)
         VALUES (#{title},#{content},#{coverImg},#{categoryId},#{createUser},#{createTime},#{updateTime})
     </insert>
-    <insert id="category">
-        insert into category(category_name, category_alias, create_user, create_time, update_time)
-        VALUES (#{categoryName},#{categoryAlias},#{createUser},#{createTime},#{updateTime})
-    </insert>
+
+    <select id="page" resultType="com.bubbles.pojo.vo.ArticleVO">
+        select * from article
+        <where>
+            #默认已发布，交给前端操作
+            # state = #{state}
+            <if test="title != null and title != ''"> AND title = #{title} </if>
+            <if test="categoryId != null and categoryId != ''"> AND category_id = #{categoryId} </if>
+            <if test="state !=null and state !='' "> AND state = #{state}</if>
+            <if test="createTime != null "> AND create_time = #{createTime} </if>
+            <if test="updateTime != null "> AND update_time = #{updateTime} </if>
+        </where>
+        order by create_time desc
+    </select>
+
+    <update id="update">
+        update article
+        <set>
+            <if test="title != null and title !='' ">title = #{title},</if>
+            <if test="content != null and content !='' ">title = #{title},</if>
+            <if test="categoryId != null and categoryId !='' ">category_id = #{categoryId},</if>
+            <if test="updateTime != null">update_time = #{updateTime}</if>
+        </set>
+        where id = #{id}
+    </update>
 </mapper>

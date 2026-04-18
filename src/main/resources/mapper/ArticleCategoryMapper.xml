@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
-<mapper namespace="com.bubbles.server.mapper.CategoryMapper">
-    <insert id="category">
+<mapper namespace="com.bubbles.server.mapper.ArticleCategoryMapper">
+    <insert id="add">
         insert into category(category_name, category_alias, create_user, create_time, update_time)
         VALUES (#{categoryName},#{categoryAlias},#{createUser},#{createTime},#{updateTime})
     </insert>
-    <select id="pageQuery" resultType="com.bubbles.pojo.entity.Category">
+    <select id="pageQuery" resultType="com.bubbles.pojo.entity.ArticleCategory">
         select * from category
         <where>
             <if test="categoryName != null and categoryName !='' ">AND category_name = #{categoryName}</if>
@@ -16,4 +16,13 @@
         </where>
         order by create_time desc
     </select>
+    <update id="update">
+        update category
+        <set>
+            <if test="categoryName !=null"> category_name = #{categoryName},</if>
+            <if test="categoryAlias !=null"> category_alias = #{categoryAlias},</if>
+            <if test="updateTime !=null "> update_time = #{updateTime}</if>
+        </set>
+        where id = #{id}
+    </update>
 </mapper>

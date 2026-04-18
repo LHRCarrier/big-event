@@ -9,16 +9,18 @@ import java.time.OffsetDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class CategoryPageQueryDTO {
+public class ArticlePageQueryDTO {
 
     private int page;
 
     private int pageSize;
-    //分类名称
+    //文章标题
+    private String title ;
+    //发布状态
+    private String state;
 
-    private String categoryName;
-    //分类别名
-    private String categoryAlias;
+    //分类id
+    private Long categoryId;
     //更新时间
     private OffsetDateTime updateTime;
     //创建时间

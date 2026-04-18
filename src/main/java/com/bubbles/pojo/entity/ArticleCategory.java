@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Data
 @Builder
-public class Category {
+public class ArticleCategory {
     private Long id;
     private String categoryName;
     private String categoryAlias;
