@@ -5,6 +5,8 @@ import com.bubbles.common.result.PageResult;
 import com.bubbles.pojo.dto.ArticleCategoryDTO;
 import com.bubbles.pojo.dto.CategoryPageQueryDTO;
 import com.bubbles.pojo.entity.ArticleCategory;
+import com.bubbles.pojo.vo.ArticleCategoryVO;
+import com.bubbles.pojo.vo.ArticleVO;
 import com.bubbles.server.mapper.ArticleCategoryMapper;
 import com.bubbles.server.service.ArticleCategoryService;
 import com.github.pagehelper.Page;
@@ -43,9 +45,9 @@ public class ArticleCategoryServiceImpl implements ArticleCategoryService {
      */
     public PageResult pageQuery(CategoryPageQueryDTO categoryPageQueryDTO) {
         PageHelper.startPage(categoryPageQueryDTO.getPage(),categoryPageQueryDTO.getPageSize());
-        Page<ArticleCategory> page = articleCategoryMapper.pageQuery(categoryPageQueryDTO);
+        Page<ArticleCategoryVO> page = articleCategoryMapper.pageQuery(categoryPageQueryDTO);
         long total = page.getTotal();
-        List<ArticleCategory> records = page.getResult();
+        List<ArticleCategoryVO> records = page.getResult();
         return new PageResult(total,records);
     }
 

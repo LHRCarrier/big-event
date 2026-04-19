@@ -6,8 +6,8 @@
         insert into category(category_name, category_alias, create_user, create_time, update_time)
         VALUES (#{categoryName},#{categoryAlias},#{createUser},#{createTime},#{updateTime})
     </insert>
-    <select id="pageQuery" resultType="com.bubbles.pojo.entity.ArticleCategory">
-        select * from category
+    <select id="pageQuery" resultType="com.bubbles.pojo.vo.ArticleCategoryVO">
+        select category.id,category.category_name,category.category_alias from category
         <where>
             <if test="categoryName != null and categoryName !='' ">AND category_name = #{categoryName}</if>
             <if test="categoryAlias != null and categoryAlias !='' ">AND category_alias = #{categoryAlias}</if>
@@ -26,3 +26,4 @@
         where id = #{id}
     </update>
 </mapper>
+

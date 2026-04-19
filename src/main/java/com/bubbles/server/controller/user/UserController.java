@@ -32,7 +32,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/user")
+@RequestMapping("/user/user")
 @Slf4j
 @Tag(name="用户相关接口",description = "包含注册，登录，及个人信息的增删改查")
 
@@ -48,7 +48,7 @@ public class UserController {
      * @param password
      * @return
      */
-    @PostMapping("/user/register")
+    @PostMapping("/register")
     @Operation(summary="用户注册",description = "")
     public Result register(String username, String password){
         String md5Password = DigestUtils.md5DigestAsHex(password.getBytes());
@@ -74,7 +74,7 @@ public class UserController {
      *
      * @return
      */
-    @PostMapping("/user/login")
+    @PostMapping("/login")
     @Operation(summary = "登录",description = "")
     public Result<UserLoginVO> login(UserLoginDTO userLoginDTO){
         User user = userService.search(userLoginDTO.getUsername());
@@ -124,7 +124,7 @@ public class UserController {
      * 获取当前用户的详细信息
      * @return
      */
-    @GetMapping("/user/userInfo")
+    @GetMapping("/userInfo")
     @Operation(summary = "获取用户详细信息",description = "获取用户详细信息")
     public Result<UserVO> getUserInfo(){
         Long userId = BaseContext.getCurrentId();
@@ -140,7 +140,7 @@ public class UserController {
      * @param userDTO
      * @return
      */
-    @PutMapping("/user/update")
+    @PutMapping("/update")
     @Operation(summary = "更新用户基本信息",description = "更新用户头像")
     public Result updateInfo(@RequestBody @Validated UserDTO userDTO){
         userService.update(userDTO);
@@ -152,7 +152,7 @@ public class UserController {
      * @param avatarUrl
      * @return
      */
-    @PutMapping("/user/updateAvatar")
+    @PutMapping("/updateAvatar")
     @Operation(summary = "更新用户头像",description = "更新用户头像")
     public Result updateAvatar(String avatarUrl){
         userService.updateAvatar(avatarUrl);
@@ -164,7 +164,7 @@ public class UserController {
      * @param passwordUpdateDTO
      * @return
      */
-    @PutMapping("/user/updatePassword")
+    @PutMapping("/updatePassword")
     @Operation(summary = "修改密码",description = "修改密码")
     public Result updatePassword(@Validated PasswordUpdateDTO passwordUpdateDTO){
         userService.updatePassword(passwordUpdateDTO);

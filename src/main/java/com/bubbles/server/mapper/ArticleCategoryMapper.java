@@ -3,6 +3,8 @@ package com.bubbles.server.mapper;
 import com.bubbles.pojo.dto.ArticleCategoryDTO;
 import com.bubbles.pojo.dto.CategoryPageQueryDTO;
 import com.bubbles.pojo.entity.ArticleCategory;
+import com.bubbles.pojo.vo.ArticleCategoryVO;
+import com.bubbles.pojo.vo.ArticleVO;
 import com.github.pagehelper.Page;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
@@ -20,7 +22,7 @@ public interface ArticleCategoryMapper {
      * @param categoryPageQueryDTO
      * @return
      */
-    Page<ArticleCategory> pageQuery(CategoryPageQueryDTO categoryPageQueryDTO);
+    Page<ArticleCategoryVO> pageQuery(CategoryPageQueryDTO categoryPageQueryDTO);
 
     /**
      * 修改文章分类属性

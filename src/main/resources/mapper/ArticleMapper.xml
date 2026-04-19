@@ -9,10 +9,9 @@
     </insert>
 
     <select id="page" resultType="com.bubbles.pojo.vo.ArticleVO">
-        select * from article
+        select  article.id,article.title,article.content,article.cover_img,article.state from article
         <where>
-            #默认已发布，交给前端操作
-            # state = #{state}
+
             <if test="title != null and title != ''"> AND title = #{title} </if>
             <if test="categoryId != null and categoryId != ''"> AND category_id = #{categoryId} </if>
             <if test="state !=null and state !='' "> AND state = #{state}</if>

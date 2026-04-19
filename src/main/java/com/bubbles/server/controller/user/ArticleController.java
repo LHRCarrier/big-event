@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @Slf4j
 @Tag(name="文章管理相关接口",description = "包含新增，修改，及文章信息的增删改查")
-@RequestMapping("/article")
+@RequestMapping("/user/article")
 public class ArticleController {
     @Autowired
     private ArticleService articleService;

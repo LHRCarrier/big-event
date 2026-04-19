@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @Slf4j
 @Tag(name="文章分类相关接口",description = "包含文章分类新增，修改，查询，删除接口")
-@RequestMapping("/category")
+@RequestMapping("/user/category")
 public class ArticleCategoryController {
     @Autowired
     private ArticleCategoryService articleCategoryService;
@@ -37,7 +37,7 @@ public class ArticleCategoryController {
      * @param categoryPageQueryDTO
      * @return
      */
-    @GetMapping("/list")
+    @GetMapping("/page")
     @Operation(summary = "分页查询文章分类",description = "该接口用于获取当前已登录用户创建的所有文章分类")
     public Result<PageResult> page(CategoryPageQueryDTO categoryPageQueryDTO){
         log.info("分页查询文章分类请求:categoryPageQueryDTO: {}", categoryPageQueryDTO);
