@@ -134,14 +134,13 @@ public class WebMvcConfiguration implements WebMvcConfigurer {
     /** TODO
      * 配置 CORS 跨域请求支持
      */
-//    @Override
-//    public void addCorsMappings(CorsRegistry registry) {
-//        log.info("开始配置 CORS 跨域请求支持...");
-//        registry.addMapping("/**")
-//
-//                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-//                .allowedHeaders("*")
-//                .allowCredentials(true)
-//                .maxAge(3600);
-//    }
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        log.info("开始配置 CORS 跨域请求支持...");
+        registry.addMapping("/**")
+                .allowedOrigins("http://localhost:5173")
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowCredentials(true)
+                .maxAge(3600);
+    }
 }

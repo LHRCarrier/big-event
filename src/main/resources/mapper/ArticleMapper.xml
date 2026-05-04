@@ -4,12 +4,12 @@
 <mapper namespace="com.bubbles.server.mapper.ArticleMapper">
 
     <insert id="add">
-        insert into article(title, content, cover_img, category_id, create_user, create_time, update_time)
-        VALUES (#{title},#{content},#{coverImg},#{categoryId},#{createUser},#{createTime},#{updateTime})
+        insert into article(title, content, cover_img, category_id, create_user, create_time, update_time,state)
+        VALUES (#{title},#{content},#{coverImg},#{categoryId},#{createUser},#{createTime},#{updateTime},#{state})
     </insert>
 
     <select id="page" resultType="com.bubbles.pojo.vo.ArticleVO">
-        select  article.id,article.title,article.content,article.cover_img,article.state from article
+        select  article.id,article.title,article.content,article.cover_img,article.state,article.category_id,article.create_time,article.update_time from article
         <where>
 
             <if test="title != null and title != ''"> AND title = #{title} </if>
@@ -25,7 +25,7 @@
         update article
         <set>
             <if test="title != null and title !='' ">title = #{title},</if>
-            <if test="content != null and content !='' ">title = #{title},</if>
+            <if test="content != null and content !='' ">content = #{content},</if>
             <if test="categoryId != null and categoryId !='' ">category_id = #{categoryId},</if>
             <if test="updateTime != null">update_time = #{updateTime}</if>
         </set>

@@ -7,6 +7,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.format.DecimalStyle;
 
 @Data
 @Builder
@@ -30,4 +33,14 @@ public class ArticleVO implements Serializable {
 
     @Schema(description = "发布状态")
     private String state;
+
+    @Schema(description = "创建时间")
+    private OffsetDateTime createTime;
+
+    @Schema(description = "上次更新时间")
+    private OffsetDateTime updateTime;
+
+    @Schema(description = "分类Id")
+    private String categoryId;
+
 }

@@ -7,8 +7,10 @@ import com.bubbles.pojo.dto.CategoryPageQueryDTO;
 import com.bubbles.server.service.ArticleCategoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -26,7 +28,7 @@ public class ArticleCategoryController {
      */
     @PostMapping("/add")
     @Operation(summary = "新增文章分类",description = "新增文章分类")
-    public Result category(@RequestBody ArticleCategoryDTO articleCategoryDTO){
+    public Result category(@Validated @RequestBody ArticleCategoryDTO articleCategoryDTO){
         log.info("新增文章分类请求:articleCategoryDTO: {}", articleCategoryDTO);
         articleCategoryService.addCategory(articleCategoryDTO);
         return  Result.success("新增文章分类操作成功！");
@@ -51,7 +53,7 @@ public class ArticleCategoryController {
      */
     @PutMapping("/update")
     @Operation(summary = "修改文章分类信息",description = "该接口用于更新文章分类")
-    public Result update(@RequestBody ArticleCategoryDTO articleCategoryDTO){
+    public Result update(@Validated @RequestBody ArticleCategoryDTO articleCategoryDTO){
         log.info("修改文章分类请求:{}",articleCategoryDTO);
         articleCategoryService.update(articleCategoryDTO);
         return Result.success("修改成功!");

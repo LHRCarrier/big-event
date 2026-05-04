@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.annotations.Delete;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -68,7 +69,7 @@ public class ArticleController {
      */
     @PutMapping("/update")
     @Operation(summary = "更新文章",description = "该接口用于更新文章信息")
-    public Result<String> update(ArticleDTO articleDTO){
+    public Result<String> update(@Validated @RequestBody ArticleDTO articleDTO){
         log.info("更新文章请求，articleDTO: {}", articleDTO);
         articleService.update(articleDTO);
         return Result.success("文章信息更新成功");

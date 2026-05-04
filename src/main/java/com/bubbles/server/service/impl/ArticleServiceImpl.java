@@ -32,6 +32,7 @@ public class ArticleServiceImpl implements ArticleService {
         log.info("当前用户 ID: {}", currentId);
         Article article = new Article();
         BeanUtils.copyProperties(articleDTO,article);
+
         article.setCreateUser(currentId);
         article.setCreateTime(LocalDateTime.now());
         article.setUpdateTime(LocalDateTime.now());
