@@ -11,6 +11,7 @@ import com.bubbles.server.service.UserService;
 import com.bubbles.pojo.entity.User;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestBody;
 import lombok.extern.slf4j.Slf4j;
@@ -154,7 +155,8 @@ public class UserController {
      */
     @PutMapping("/updateAvatar")
     @Operation(summary = "更新用户头像",description = "更新用户头像")
-    public Result updateAvatar(String avatarUrl){
+    public Result updateAvatar(@NotNull String avatarUrl){
+        log.info("头像url ,avatarUrl:{}",avatarUrl);
         userService.updateAvatar(avatarUrl);
         return Result.success("头像修改成功");
     }
@@ -166,7 +168,8 @@ public class UserController {
      */
     @PutMapping("/updatePassword")
     @Operation(summary = "修改密码",description = "修改密码")
-    public Result updatePassword(@Validated PasswordUpdateDTO passwordUpdateDTO){
+    public Result updatePassword(@Validated @RequestBody PasswordUpdateDTO passwordUpdateDTO){
+        log.info("修改密码,接受到的请求数据:{}",passwordUpdateDTO);
         userService.updatePassword(passwordUpdateDTO);
         return  Result.success("密码已修改成功!");
     }

@@ -23,10 +23,10 @@ public class UserVO implements Serializable {
     private Long id;
 
     @Schema(description = "用户名")
-    private String userName;
+    private String username;
 
     @Schema(description = "昵称")
-    private String nickName;
+    private String nickname;
 
     @Schema(description = "邮箱")
     private String email;

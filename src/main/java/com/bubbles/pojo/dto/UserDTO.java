@@ -19,9 +19,9 @@ public class UserDTO implements Serializable {
     @NotNull
     private Long id;
     @NotEmpty
-    @Pattern(regexp="^\\${1,10}")
+    @Pattern(regexp="^.{1,10}$")
     private String username;
-    @Pattern(regexp="^\\${1,10}")
+    @Pattern(regexp="^.{1,10}$")
     private String nickname;
     @Email
     private String email;
