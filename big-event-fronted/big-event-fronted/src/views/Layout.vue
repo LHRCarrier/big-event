@@ -7,7 +7,10 @@ import {
     Crop,
     EditPen,
     SwitchButton,
-    CaretBottom
+    CaretBottom,
+    Monitor,
+    Setting,
+    VideoCamera
 } from '@element-plus/icons-vue'
 import avatar from '/src/assets/default.png'
 import router from '../router';
@@ -82,6 +85,18 @@ const handleCommand = (command) => {
                         <Promotion />
                     </el-icon>
                     <span>文章管理</span>
+                </el-menu-item>
+                <el-menu-item index="/writer/test">
+                    <el-icon>
+                        <Monitor />
+                    </el-icon>
+                    <span>AI撰稿测试</span>
+                </el-menu-item>
+                <el-menu-item index="/bilibili/hot">
+                    <el-icon>
+                        <VideoCamera />
+                    </el-icon>
+                    <span>B站热点分析</span>
                 </el-menu-item>
                 <el-sub-menu >
                     <template #title>
