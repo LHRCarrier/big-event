@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.bubbles.server.mapper.HotSnapshotMapper">
+
+    <insert id="batchInsert">
+        insert into hot_snapshot(snapshot_time, bvid, title, url, cover_url, author, tname, partition_tag, pubdate, description, `rank`,
+                                 view_count, like_count, coin_count, favorite_count, share_count, danmaku_count, reply_count, hot_score)
+        values
+        <foreach collection="list" item="item" separator=",">
+            (#{item.snapshotTime}, #{item.bvid}, #{item.title}, #{item.url}, #{item.coverUrl},
+             #{item.author}, #{item.tname}, #{item.partitionTag}, #{item.pubdate}, #{item.description}, #{item.rank},
+             #{item.viewCount}, #{item.likeCount}, #{item.coinCount}, #{item.favoriteCount},
+             #{item.shareCount}, #{item.danmakuCount}, #{item.replyCount}, #{item.hotScore})
+        </foreach>
+    </insert>
+
+    <select id="getByTimeRange" resultType="com.bubbles.pojo.entity.HotSnapshot">
+        select id, snapshot_time, bvid, title, url, cover_url, author, tname, partition_tag, pubdate, description, `rank`,
+               view_count, like_count, coin_count, favorite_count, share_count, danmaku_count, reply_count, hot_score, created_at
+        from hot_snapshot
+        where snapshot_time between #{startTime} and #{endTime}
+        order by snapshot_time desc, `rank` asc
+    </select>
+
+</mapper>

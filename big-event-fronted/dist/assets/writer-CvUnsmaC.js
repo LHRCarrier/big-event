@@ -1,0 +1,5 @@
+import{t as e}from"./request-1ZiqRi0Z.js";var t=t=>e.post(`/user/writer/write`,t),n=()=>e.get(`/user/writer/status`),r=t=>e.post(`/user/writer/write-from-hot`,t),i=(t=5,n=`all`,r=60)=>e.post(`/user/writer/auto-publish`,null,{params:{topN:t,partition:n,minScore:r}}),a=(e,t,n,r)=>{fetch(`http://localhost:8001/api/writer/write/stream`,{method:`POST`,headers:{"Content-Type":`application/json`},body:JSON.stringify(e)}).then(e=>{if(!e.ok)throw Error(`HTTP error! status: ${e.status}`);let i=e.body.getReader(),a=new TextDecoder(`utf-8`),o=``,s=()=>{i.read().then(({done:e,value:r})=>{if(e){n&&n();return}for(o+=a.decode(r,{stream:!0});o.includes(`
+
+`);){let[e,n]=o.split(`
+
+`,2);if(o=n,e.startsWith(`data: `))try{let n=JSON.parse(e.slice(6));n.content&&t&&t(n.content)}catch(e){console.error(`Failed to parse SSE data:`,e)}}s()}).catch(e=>{r&&r(e)})};s()}).catch(e=>{r&&r(e)})};export{r as a,a as i,n,t as r,i as t};

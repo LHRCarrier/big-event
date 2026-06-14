@@ -1,0 +1,1 @@
+import{t as e}from"./request-1ZiqRi0Z.js";var t=t=>e.get(`/user/article/page`,{params:t}),n=t=>e.get(`/user/article/detail`,{params:{id:t}}),r=t=>e.post(`/user/article/add`,t),i=t=>e.delete(`/user/article/delete?id=${t}`),a=t=>(console.log(`updateArticlesService 接收到的数据:`,t),e.put(`/user/article/update`,t));export{a,t as i,i as n,n as r,r as t};

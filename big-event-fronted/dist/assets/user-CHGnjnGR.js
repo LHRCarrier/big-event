@@ -1,0 +1,1 @@
+import{Z as e,s as t}from"./request-1ZiqRi0Z.js";var n=t(`userInfo`,()=>{let t=e({});return{info:t,setInfo:e=>{t.value=e},removeInfo:()=>{t.value={}}}},{persist:!0});export{n as t};

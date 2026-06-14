@@ -1,0 +1,1 @@
+import{t as e}from"./request-1ZiqRi0Z.js";function t(t){return e.get(`/user/category/page`,{params:t})}var n=t=>e.post(`/user/category/add`,t),r=t=>e.put(`/user/category/update`,t),i=t=>e.delete(`/user/category/delete?id=${t}`);export{t as i,i as n,r,n as t};

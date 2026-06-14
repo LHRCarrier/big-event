@@ -1,0 +1,1 @@
+import{t as e}from"./request-1ZiqRi0Z.js";var t=t=>e({url:`/user/common/upload`,method:`post`,data:t,headers:{"Content-Type":`multipart/form-data`}});export{t};
