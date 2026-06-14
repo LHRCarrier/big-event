@@ -1,5 +1,6 @@
 package com.bubbles.server.service.impl;
 
+import com.bubbles.pojo.dto.WriteFromHotRequestDTO;
 import com.bubbles.pojo.dto.WriterRequestDTO;
 import com.bubbles.pojo.dto.WriterResponseDTO;
 import com.bubbles.server.service.WriterAIService;
@@ -60,6 +61,39 @@ public class WriterAIServiceImpl implements WriterAIService {
         }
     }
     
+    @Override
+    public WriterResponseDTO writeFromHot(WriteFromHotRequestDTO request) {
+        log.info("开始调用AI热点撰稿服务，标题: {}", request.getTitle());
+
+        try {
+            String url = aiServiceBaseUrl + "/api/writer/write-from-hot";
+
+            Mono<WriterResponseDTO> responseMono = webClient.post()
+                    .uri(url)
+                    .bodyValue(request)
+                    .retrieve()
+                    .bodyToMono(WriterResponseDTO.class)
+                    .timeout(Duration.ofMillis(timeout));
+
+            WriterResponseDTO response = responseMono.block();
+
+            log.info("AI热点撰稿服务调用成功，文章ID: {}", response != null ? response.getArticleId() : "null");
+            return response;
+
+        } catch (Exception e) {
+            log.error("调用AI热点撰稿服务失败，降级到普通撰稿", e);
+            // fallback: 用标题作为 topic 调普通撰稿
+            WriterRequestDTO fallbackReq = WriterRequestDTO.builder()
+                    .topic(request.getTitle())
+                    .length(request.getLength() != null ? request.getLength() : 800)
+                    .style(request.getStyle() != null ? request.getStyle() : "neutral")
+                    .audience(request.getAudience() != null ? request.getAudience() : "general")
+                    .generateSummary(request.getGenerateSummary() != null ? request.getGenerateSummary() : true)
+                    .build();
+            return writeArticle(fallbackReq);
+        }
+    }
+
     @Override
     public boolean isServiceAvailable() {
         try {

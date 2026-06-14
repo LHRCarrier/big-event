@@ -13,7 +13,7 @@ from datetime import datetime
 from typing import List, Optional
 import requests
 from config import config
-from schemas.request import WriteArticleRequest
+from schemas.request import WriteArticleRequest, WriteFromHotRequest
 from schemas.response import WriteArticleResponse, ArticleSection
 
 class WriterService:
@@ -303,6 +303,156 @@ class WriterService:
             generated_at=datetime.now(),
             model_used=config.OPENAI_MODEL
         )
+
+    def _build_hot_article_prompt(self, request: WriteFromHotRequest) -> str:
+        """
+        构建包含热点上下文信息的系统提示词
+
+        核心改进：将视频简介(desc)作为主要素材来源，让 AI 基于真实内容展开，
+        而非仅凭标题臆测。简介提供事实和细节，标题和互动数据提供选题热度佐证。
+        """
+        style_map = {
+            "neutral": "中立客观，新闻体风格",
+            "formal": "正式严谨，深度分析风格",
+            "casual": "轻松活泼，自媒体风格",
+            "technical": "专业技术，行业洞察风格"
+        }
+        audience_map = {
+            "general": "普通大众",
+            "professional": "专业人士",
+            "student": "学生群体"
+        }
+
+        # 有简介时：简介作为核心素材，标题作为选题方向
+        if request.description and len(request.description.strip()) >= 20:
+            material_section = f"""## 核心素材（文章必须基于以下内容展开）
+{request.description}
+
+以上是该热点事件的核心信息/简介，是撰写文章的主要素材来源。
+请仔细阅读，从中提取关键事实、数据、观点，据此构建文章的主体内容。"""
+
+        # 无简介或简介过短时：回退到仅用标题+互动数据
+        else:
+            material_section = f"""## 选题信息（请围绕该话题展开文章）
+- 热点标题：{request.title}
+- 注意：该话题缺乏详细素材，请基于你的知识库进行客观专业的介绍和分析"""
+
+        prompt = f"""你是一位专业的自媒体撰稿人，擅长基于热点事件撰写深度文章。
+
+## 写作要求
+- 文章长度：约 {request.length} 字
+- 风格：{style_map.get(request.style, "中立客观")}
+- 目标受众：{audience_map.get(request.audience, "普通大众")}
+- 文章需要有吸引力的标题、引言、正文分论点（2-3个）、结语
+- 使用 Markdown 格式，正文适度使用列表和加粗，让文章更易读
+
+## 选题背景
+- 选题方向：{request.title}
+- 所属领域：{request.partition}
+- UP主/作者：{request.author}
+- 数据表现：播放 {request.view_count}，点赞 {request.like_count}，收藏 {request.favorite_count}，分享 {request.share_count}
+- 综合热度评分：{request.hot_score}（满分100）
+
+{material_section}
+
+## 注意事项
+- 不要简单复述视频内容，要从事件出发做深度分析或观点输出
+- 不要在文中出现"根据B站视频"、"UP主说"、"该视频"、"视频简介显示"之类暴露来源的话术，用"近期"、"据了解"、"有观点认为"、"资料显示"等表达
+- 文中可适度加入对同类现象或行业的横向对比，增加文章深度
+- 观点要有理有据，避免空洞的情绪化表达
+- 不要复读简介内容，要在其基础上补充分析、背景和见解"""
+
+        return prompt
+
+    def write_article_from_hot(self, request: WriteFromHotRequest) -> WriteArticleResponse:
+        """
+        基于热点数据撰写文章
+
+        与 write_article 的区别：
+        - prompt 包含完整的热点上下文（播放量、互动数、排名等），文章质量更高
+        - 使用热点标题而非简单 topic 作为写作主题
+        """
+        try:
+            print(f"[WriterService] 开始基于热点撰写文章: {request.title}")
+
+            url = f"{config.OPENAI_BASE_URL}/v1/chat/completions"
+            headers = {
+                "Authorization": f"Bearer {config.OPENAI_API_KEY}",
+                "Content-Type": "application/json"
+            }
+
+            system_prompt = self._build_hot_article_prompt(request)
+
+            payload = {
+                "model": config.OPENAI_MODEL,
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": f"请基于以下热点话题撰写一篇文章：{request.title}"}
+                ],
+                "max_tokens": request.length * 2,
+                "temperature": 0.7
+            }
+
+            print(f"[WriterService] 发送热点撰稿请求, model={config.OPENAI_MODEL}")
+
+            response = self.session.post(
+                url,
+                headers=headers,
+                json=payload,
+                timeout=120,
+                proxies={"http": None, "https": None}
+            )
+
+            if response.status_code == 200:
+                result = response.json()
+                content = result["choices"][0]["message"]["content"]
+                print(f"[WriterService] 热点撰稿成功, 长度: {len(content)}")
+
+                # 提取标题
+                title = request.title
+                for line in content.split('\n'):
+                    if line.startswith('# '):
+                        title = line[2:].strip()
+                        break
+
+                # 生成摘要
+                summary = None
+                if request.generate_summary:
+                    summary = self._generate_summary(content)
+
+                sections = self._parse_sections(content)
+
+                return WriteArticleResponse(
+                    article_id=str(uuid.uuid4()),
+                    title=title,
+                    content=content,
+                    summary=summary,
+                    sections=sections,
+                    generated_at=datetime.now(),
+                    model_used=config.OPENAI_MODEL
+                )
+            else:
+                print(f"[WriterService] 热点撰稿API失败: {response.status_code}")
+                # fallback: 退回到普通 mock，使用热点标题
+                fallback_req = WriteArticleRequest(
+                    topic=request.title,
+                    length=request.length,
+                    style=request.style,
+                    audience=request.audience,
+                    generate_summary=request.generate_summary
+                )
+                return self.write_article(fallback_req)
+
+        except Exception as e:
+            print(f"[WriterService] 热点撰稿异常: {str(e)}")
+            fallback_req = WriteArticleRequest(
+                topic=request.title,
+                length=request.length,
+                style=request.style,
+                audience=request.audience,
+                generate_summary=request.generate_summary
+            )
+            return self.write_article(fallback_req)
 
     def is_available(self) -> bool:
         """

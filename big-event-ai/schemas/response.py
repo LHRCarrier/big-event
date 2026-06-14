@@ -126,27 +126,41 @@ class BiliHotItem(BaseModel):
     """
     # 排名
     rank: int = Field(..., description="排名")
-    
+
     # 标题
     title: str = Field(..., description="标题")
-    
-    # 热度数值
-    hot_value: int = Field(..., description="热度数值")
-    
+
+    # 播放量
+    view_count: int = Field(0, description="播放量")
+
     # 封面图
     cover_url: Optional[str] = Field(None, description="封面图URL")
-    
+
     # BV号
     bvid: Optional[str] = Field(None, description="视频BV号")
-    
+
     # UP主
     author: Optional[str] = Field(None, description="UP主名称")
-    
+
     # 链接
     url: Optional[str] = Field(None, description="链接地址")
-    
+
     # 分区
     category: Optional[str] = Field(None, description="分区名称")
+
+    # 发布时间（Unix 时间戳转换）
+    pubdate: Optional[datetime] = Field(None, description="视频发布时间")
+
+    # 视频简介
+    description: Optional[str] = Field(None, description="视频简介")
+
+    # 互动数据（来自B站stat字段）
+    like_count: int = Field(0, description="点赞数")
+    coin_count: int = Field(0, description="投币数")
+    favorite_count: int = Field(0, description="收藏数")
+    share_count: int = Field(0, description="分享数")
+    danmaku_count: int = Field(0, description="弹幕数")
+    reply_count: int = Field(0, description="评论数")
 
 class BiliHotResponse(BaseModel):
     """

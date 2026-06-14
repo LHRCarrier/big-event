@@ -17,6 +17,10 @@ public class Article {
     private String content;
     private String coverImg;
     private String state;
+    /** 来源平台: bilibili/zhihu/weibo/toutiao */
+    private String platform;
+    /** 关联话题ID (对应 topic 表) */
+    private Long topicId;
     private Long categoryId;
     private Long createUser;
     private LocalDateTime createTime;

@@ -6,7 +6,7 @@ from datetime import datetime
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from config import config
-from schemas.request import WriteArticleRequest, AnalyzeHotTopicRequest, CollectInfoRequest
+from schemas.request import WriteArticleRequest, WriteFromHotRequest, AnalyzeHotTopicRequest, CollectInfoRequest
 from schemas.response import WriteArticleResponse, AnalyzeHotTopicResponse, CollectInfoResponse, ServiceStatus, BiliHotResponse
 from services.writer_service import writer_service
 from services.hot_topic_service import hot_topic_service
@@ -115,6 +115,32 @@ async def write_article_stream(request: WriteArticleRequest):
             "Access-Control-Allow-Origin": "*"
         }
     )
+
+@app.post("/api/writer/write-from-hot", response_model=WriteArticleResponse, tags=["AI撰稿"])
+async def write_article_from_hot(request: WriteFromHotRequest):
+    """
+    基于热点数据撰稿接口
+
+    与普通撰稿接口的区别：请求中包含完整的热点上下文（播放量、互动数据、排名等），
+    AI 将基于这些信息生成更高质量、更贴合热点的文章。
+
+    参数：
+    - title: 热点标题
+    - partition: 一级分区
+    - view_count/like_count/coin_count 等: 互动数据
+    - hot_score: 综合热度评分
+    - rank: 热榜排名
+    - length/style/audience: 文章参数（同普通撰稿）
+
+    返回：
+    - 与普通撰稿接口相同的 WriteArticleResponse
+    """
+    try:
+        result = writer_service.write_article_from_hot(request)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"热点文章生成失败: {str(e)}")
+
 
 # ==================== 热点分析接口 ====================
 

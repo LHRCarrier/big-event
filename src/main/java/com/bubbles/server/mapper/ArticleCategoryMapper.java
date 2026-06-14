@@ -8,6 +8,7 @@ import com.bubbles.pojo.vo.ArticleVO;
 import com.github.pagehelper.Page;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Select;
 
 @Mapper
 public interface ArticleCategoryMapper {
@@ -36,4 +37,7 @@ public interface ArticleCategoryMapper {
      */
     @Delete("delete from category where id = #{id}")
     void delete(Long id);
+
+    @Select("select id from category where category_name = #{name} limit 1")
+    Long findIdByName(String name);
 }

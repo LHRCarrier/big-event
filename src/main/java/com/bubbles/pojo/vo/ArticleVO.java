@@ -43,4 +43,10 @@ public class ArticleVO implements Serializable {
     @Schema(description = "分类Id")
     private String categoryId;
 
+    @Schema(description = "来源平台")
+    private String platform;
+
+    @Schema(description = "关联话题ID")
+    private Long topicId;
+
 }

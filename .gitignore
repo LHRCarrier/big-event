@@ -20,6 +20,7 @@ target/
 *.ipr
 *.yml
 
+
 ### NetBeans ###
 /nbproject/private/
 /nbbuild/
@@ -40,3 +41,4 @@ frontend/node_modules/
 .env.*.local
 ### AI
 .trae
+.env

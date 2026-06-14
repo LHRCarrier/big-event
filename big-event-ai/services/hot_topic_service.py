@@ -308,16 +308,45 @@ class HotTopicService:
             
             # 获取并清理其他URL字段
             url = item.get("url", "").strip("`")
-            
+
+            # 提取stat互动数据
+            stat = extra.get("stat", {})
+            like_count = stat.get("like", 0)
+            coin_count = stat.get("coin", 0)
+            favorite_count = stat.get("favorite", 0)
+            share_count = stat.get("share", 0)
+            danmaku_count = stat.get("danmaku", 0)
+            reply_count = stat.get("reply", 0)
+
+            # 解析视频发布时间（Unix 时间戳）
+            pubdate = None
+            pubdate_ts = extra.get("pubdate") or item.get("pubdate")
+            if pubdate_ts:
+                try:
+                    pubdate = datetime.fromtimestamp(int(pubdate_ts))
+                except (ValueError, TypeError, OSError):
+                    pass
+
+            # 视频简介
+            description = extra.get("desc", "") or item.get("desc", "")
+
             bili_item = BiliHotItem(
                 rank=idx,
                 title=item.get("title", ""),
-                hot_value=hot_value,
+                view_count=hot_value,
                 cover_url=cover_url,
                 bvid=bvid,
                 author=author,
                 url=url,
-                category=category
+                category=category,
+                pubdate=pubdate,
+                description=description,
+                like_count=like_count,
+                coin_count=coin_count,
+                favorite_count=favorite_count,
+                share_count=share_count,
+                danmaku_count=danmaku_count,
+                reply_count=reply_count
             )
             items.append(bili_item)
         
@@ -338,35 +367,45 @@ class HotTopicService:
         返回：
         - BiliHotResponse: Mock热榜数据
         """
+        import random
         mock_data = [
-            {"title": "2025年最火编程语言排名出炉！Python竟然不是第一？", "hot": 2589630, "category": "科技"},
-            {"title": "【4K超清】AI绘画新突破！Stable Diffusion 4.0震撼发布", "hot": 1895240, "category": "科技"},
-            {"title": "程序员的一天：从月薪5k到5w的5年成长历程", "hot": 1652380, "category": "生活"},
-            {"title": "深度解析：为什么Rust这么火却难学？", "hot": 1423690, "category": "科技"},
-            {"title": "【教程】30分钟带你入门Web3.0开发", "hot": 1258960, "category": "科技"},
-            {"title": "【VLOG】UP主用AI做视频年入百万的秘密", "hot": 1098560, "category": "生活"},
-            {"title": "ChatGPT-5传闻曝光！GPT-4o将成为绝唱？", "hot": 985630, "category": "科技"},
-            {"title": "【科普】量子计算到底是什么？看完你就懂了", "hot": 875420, "category": "科普"},
-            {"title": "2025年计算机专业就业现状分析", "hot": 765890, "category": "科技"},
-            {"title": "【开源推荐】这10个GitHub项目让你事半功倍", "hot": 652340, "category": "科技"},
-            {"title": "如何用AI做PPT？效率提升10倍！", "hot": 598630, "category": "教程"},
-            {"title": "【游戏】2025年最值得期待的10款大作", "hot": 545280, "category": "游戏"},
-            {"title": "程序员必看！2025年技术趋势预测", "hot": 489650, "category": "科技"},
-            {"title": "【记录】我在大厂工作的第1000天", "hot": 432560, "category": "生活"},
-            {"title": "Vue3 vs React 2025，谁才是前端王者？", "hot": 398560, "category": "科技"},
+            {"title": "2025年最火编程语言排名出炉！Python竟然不是第一？", "view": 2589630, "category": "科技"},
+            {"title": "【4K超清】AI绘画新突破！Stable Diffusion 4.0震撼发布", "view": 1895240, "category": "科技"},
+            {"title": "程序员的一天：从月薪5k到5w的5年成长历程", "view": 1652380, "category": "生活"},
+            {"title": "深度解析：为什么Rust这么火却难学？", "view": 1423690, "category": "科技"},
+            {"title": "【教程】30分钟带你入门Web3.0开发", "view": 1258960, "category": "科技"},
+            {"title": "【VLOG】UP主用AI做视频年入百万的秘密", "view": 1098560, "category": "生活"},
+            {"title": "ChatGPT-5传闻曝光！GPT-4o将成为绝唱？", "view": 985630, "category": "科技"},
+            {"title": "【科普】量子计算到底是什么？看完你就懂了", "view": 875420, "category": "科普"},
+            {"title": "2025年计算机专业就业现状分析", "view": 765890, "category": "科技"},
+            {"title": "【开源推荐】这10个GitHub项目让你事半功倍", "view": 652340, "category": "科技"},
+            {"title": "如何用AI做PPT？效率提升10倍！", "view": 598630, "category": "教程"},
+            {"title": "【游戏】2025年最值得期待的10款大作", "view": 545280, "category": "游戏"},
+            {"title": "程序员必看！2025年技术趋势预测", "view": 489650, "category": "科技"},
+            {"title": "【记录】我在大厂工作的第1000天", "view": 432560, "category": "生活"},
+            {"title": "Vue3 vs React 2025，谁才是前端王者？", "view": 398560, "category": "科技"},
         ]
-        
+
         items = []
         for idx, item in enumerate(mock_data, 1):
+            view_count = item["view"]
             items.append(BiliHotItem(
                 rank=idx,
                 title=item["title"],
-                hot_value=item["hot"],
+                view_count=view_count,
                 cover_url=f"https://picsum.photos/seed/bili{idx}/320/180",
                 bvid=f"BV{idx:010d}",
                 author=f"UP主{idx}号",
                 url=f"https://www.bilibili.com/video/BV{idx:010d}",
-                category=item["category"]
+                category=item["category"],
+                pubdate=datetime.now(),
+                description=f"{item['title']}的Mock简介",
+                like_count=view_count // 20 + random.randint(0, 1000),
+                coin_count=view_count // 50 + random.randint(0, 500),
+                favorite_count=view_count // 30 + random.randint(0, 800),
+                share_count=view_count // 200 + random.randint(0, 300),
+                danmaku_count=view_count // 500 + random.randint(0, 200),
+                reply_count=view_count // 300 + random.randint(0, 400)
             ))
         
         return BiliHotResponse(
