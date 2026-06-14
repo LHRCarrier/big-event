@@ -30,7 +30,7 @@ public class ArticleController {
      */
     @PostMapping("/add")
     @Operation(summary = "新增文章",description = "该接口用于发布(新增)文章")
-    public Result add(@RequestBody ArticleDTO articleDTO){
+    public Result add(@Validated @RequestBody ArticleDTO articleDTO){
         log.info("新增文章请求，articleDTO: {}", articleDTO);
         articleService.addArticle(articleDTO);
         return Result.success("文章新增成功！");

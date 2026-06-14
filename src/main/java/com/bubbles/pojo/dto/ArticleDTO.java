@@ -16,13 +16,14 @@ public class ArticleDTO {
     @Pattern(regexp=".{2,}")
     private String title;
     @NotEmpty
-    @Pattern(regexp=".{2,}")
     private String content;
     private Long categoryId;
     @NotEmpty
     @Pattern(regexp=".{2,}")
     private String state;
-    @NotEmpty
-    @Pattern(regexp=".{2,}")
     private String coverImg;
+    /** 来源平台: bilibili/zhihu/weibo/toutiao */
+    private String platform;
+    /** 关联话题ID */
+    private Long topicId;
 }
