@@ -14,7 +14,8 @@ const routes = [
       { path: '/user/info', component: () => import('../views/user/UserInfo.vue') },
       { path: '/user/changePassword', component: () => import('../views/user/UserChangePassword.vue') },
       { path: '/writer/test', component: () => import('../views/writer/WriterTest.vue') },
-      { path: '/bilibili/hot', component: () => import('../views/bilibili/BilibiliHot.vue') }
+      { path: '/bilibili/hot', component: () => import('../views/bilibili/BilibiliHot.vue') },
+      { path: '/knowledge/manage', component: () => import('../views/knowledge/KnowledgeManage.vue') }
     ]
   }
 ]

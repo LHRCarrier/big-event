@@ -12,20 +12,23 @@ class WriteArticleRequest(BaseModel):
     # 话题/关键词
     topic: str = Field(..., description="要撰写的话题或关键词")
     
-    # 文章长度（字数）
-    length: Optional[int] = Field(500, description="文章预期长度（字数）", ge=100, le=3000)
-    
+    # 文章长度（字数），None表示不限制
+    length: Optional[int] = Field(None, description="文章预期长度（字数），不传则不限制", ge=0, le=5000)
+
     # 文章风格
-    style: Optional[str] = Field("neutral", description="文章风格：neutral(中性)/formal(正式)/casual(轻松)/technical(技术)")
-    
+    style: Optional[str] = Field("neutral", description="文章风格：neutral(中性)/formal(正式)/casual(轻松)/literary(文学诗意)/journalistic(新闻纪实)/sharp(犀利锐评)/technical(技术)")
+
     # 目标受众
     audience: Optional[str] = Field("general", description="目标受众：general(大众)/professional(专业人士)/student(学生)")
-    
+
     # 参考信息（可选，用于辅助撰稿）
     references: Optional[List[str]] = Field([], description="参考信息列表，帮助AI了解更多背景")
-    
+
     # 是否生成摘要
     generate_summary: Optional[bool] = Field(True, description="是否生成文章摘要")
+
+    # 是否使用知识库
+    use_knowledge: Optional[bool] = Field(True, description="是否使用知识库检索高质量参考文章作为风格锚点")
 
 class AnalyzeHotTopicRequest(BaseModel):
     """
@@ -98,10 +101,10 @@ class WriteFromHotRequest(BaseModel):
     rank: int = Field(0, description="热榜排名")
 
     # 文章长度
-    length: Optional[int] = Field(800, description="文章预期长度（字数）", ge=100, le=3000)
+    length: Optional[int] = Field(None, description="文章预期长度（字数），不传则不限制", ge=0, le=5000)
 
     # 文章风格
-    style: Optional[str] = Field("neutral", description="文章风格")
+    style: Optional[str] = Field("neutral", description="文章风格：neutral(中性)/formal(正式)/casual(轻松)/literary(文学诗意)/journalistic(新闻纪实)/sharp(犀利锐评)/technical(技术)")
 
     # 目标受众
     audience: Optional[str] = Field("general", description="目标受众")
@@ -114,3 +117,6 @@ class WriteFromHotRequest(BaseModel):
 
     # 视频简介（核心素材）
     description: Optional[str] = Field(None, description="视频简介，AI撰稿的核心素材来源")
+
+    # 是否使用知识库
+    use_knowledge: Optional[bool] = Field(True, description="是否使用知识库检索高质量参考文章作为风格锚点")

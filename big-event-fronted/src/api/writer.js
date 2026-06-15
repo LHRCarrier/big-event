@@ -27,13 +27,19 @@ export const autoPublish = (topN = 5, partition = 'all', minScore = 60) => {
     })
 }
 
-/** 流式AI撰稿（直接调用Python AI服务的SSE流式接口） */
+/**
+ * 流式AI撰稿（通过Spring Boot代理 → Python AI服务SSE）
+ * Spring Boot SSE 格式为: data:chunk\n\n （纯文本内容，非JSON包裹）
+ */
 export const writeArticleStream = (params, onChunk, onComplete, onError) => {
-    const pythonServiceUrl = 'http://localhost:8001'
+    const token = JSON.parse(localStorage.getItem('token') || '{}').token || ''
 
-    fetch(`${pythonServiceUrl}/api/writer/write/stream`, {
+    fetch('/api/user/writer/write/stream', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': token ? `Bearer ${token}` : ''
+        },
         body: JSON.stringify(params)
     })
     .then(response => {
@@ -51,17 +57,15 @@ export const writeArticleStream = (params, onChunk, onComplete, onError) => {
                     return
                 }
                 buffer += decoder.decode(value, { stream: true })
-                while (buffer.includes('\n\n')) {
-                    const [event, remaining] = buffer.split('\n\n', 2)
-                    buffer = remaining
-                    if (event.startsWith('data: ')) {
-                        try {
-                            const data = JSON.parse(event.slice(6))
-                            if (data.content) {
-                                onChunk && onChunk(data.content)
-                            }
-                        } catch (e) {
-                            console.error('Failed to parse SSE data:', e)
+                const lines = buffer.split('\n')
+                // Keep the last potentially incomplete line in buffer
+                buffer = lines.pop() || ''
+                for (const line of lines) {
+                    if (line.startsWith('data:')) {
+                        // Spring SSE: data:content (no space after colon)
+                        const chunk = line.slice(5)
+                        if (chunk) {
+                            onChunk && onChunk(chunk)
                         }
                     }
                 }
@@ -75,4 +79,24 @@ export const writeArticleStream = (params, onChunk, onComplete, onError) => {
     .catch(error => {
         onError && onError(error)
     })
+}
+
+/**
+ * 知识库匹配预览（直接调用Python AI服务）
+ * 返回与话题匹配的高质量参考文章列表
+ */
+export const matchKnowledge = async (topic, limit = 5) => {
+    const pythonServiceUrl = 'http://localhost:8001'
+    try {
+        const response = await fetch(
+            `${pythonServiceUrl}/api/knowledge/match?topic=${encodeURIComponent(topic)}&limit=${limit}`
+        )
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        return await response.json()
+    } catch (error) {
+        console.error('知识库匹配请求失败:', error)
+        return { matched: 0, articles: [], error: error.message }
+    }
 }

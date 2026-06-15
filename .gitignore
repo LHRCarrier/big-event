@@ -42,3 +42,7 @@ frontend/node_modules/
 ### AI
 .trae
 .env
+
+### Python
+__pycache__/
+*.pyc

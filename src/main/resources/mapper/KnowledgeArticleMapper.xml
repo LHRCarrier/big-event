@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.bubbles.server.mapper.KnowledgeArticleMapper">
+
+    <insert id="add" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO knowledge_article(title, content, excerpt, category, tags, author, source_url,
+                                      quality, word_count, status, created_at, updated_at)
+        VALUES (#{title}, #{content}, #{excerpt}, #{category}, #{tags}, #{author}, #{sourceUrl},
+                #{quality}, #{wordCount}, #{status}, NOW(), NOW())
+    </insert>
+
+    <select id="pageQuery" resultType="com.bubbles.pojo.vo.KnowledgeArticleVO">
+        SELECT id, title,
+               CASE WHEN content IS NOT NULL THEN content ELSE '' END AS content,
+               excerpt, category, tags, author, source_url, quality, word_count, status,
+               created_at, updated_at
+        FROM knowledge_article
+        <where>
+            <if test="category != null and category != ''">AND category = #{category}</if>
+            <if test="keyword != null and keyword != ''">
+                AND (title LIKE CONCAT('%', #{keyword}, '%')
+                     OR tags LIKE CONCAT('%', #{keyword}, '%')
+                     OR excerpt LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="quality != null">AND quality = #{quality}</if>
+            <if test="status != null">AND status = #{status}</if>
+        </where>
+        ORDER BY updated_at DESC
+    </select>
+
+    <update id="update">
+        UPDATE knowledge_article
+        <set>
+            <if test="title != null">title = #{title},</if>
+            <if test="content != null">content = #{content},</if>
+            <if test="excerpt != null">excerpt = #{excerpt},</if>
+            <if test="category != null">category = #{category},</if>
+            <if test="tags != null">tags = #{tags},</if>
+            <if test="author != null">author = #{author},</if>
+            <if test="sourceUrl != null">source_url = #{sourceUrl},</if>
+            <if test="quality != null">quality = #{quality},</if>
+            <if test="wordCount != null">word_count = #{wordCount},</if>
+            <if test="status != null">status = #{status},</if>
+            updated_at = NOW()
+        </set>
+        WHERE id = #{id}
+    </update>
+
+</mapper>

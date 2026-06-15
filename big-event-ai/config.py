@@ -36,6 +36,17 @@ class Config:
     TIMEOUT = 60
     MAX_RETRIES = 3
 
+    # MySQL 配置（知识库直读）
+    MYSQL_HOST = os.getenv("MYSQL_HOST", "localhost")
+    MYSQL_PORT = int(os.getenv("MYSQL_PORT", 3305))
+    MYSQL_USER = os.getenv("MYSQL_USER", "root")
+    MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD", "root")
+    MYSQL_DATABASE = os.getenv("MYSQL_DATABASE", "big_event")
+
+    # 知识库检索配置
+    KNOWLEDGE_TOP_K = int(os.getenv("KNOWLEDGE_TOP_K", 3))
+    KNOWLEDGE_MIN_SIMILARITY = float(os.getenv("KNOWLEDGE_MIN_SIMILARITY", 0.05))
+
     @classmethod
     def print_config(cls):
         """打印当前配置（用于调试）"""

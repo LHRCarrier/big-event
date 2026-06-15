@@ -113,6 +113,7 @@ public class HotTopicSyncService {
                         .shareCount(item.getShareCount())
                         .danmakuCount(item.getDanmakuCount())
                         .replyCount(item.getReplyCount())
+                        .description(item.getDescription())
                         .hotScore(null)
                         .build();
 

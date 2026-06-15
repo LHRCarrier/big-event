@@ -18,7 +18,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -58,7 +60,18 @@ public class WriterController {
         log.info("AI撰稿完成，文章ID: {}", response.getArticleId());
         return Result.success(response);
     }
-    
+
+    /**
+     * AI撰稿流式接口
+     * 通过SSE实时推送生成内容
+     */
+    @PostMapping(value = "/write/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @Operation(summary = "AI流式撰稿", description = "通过SSE实时推送AI生成的文章内容")
+    public Flux<String> streamArticle(@RequestBody WriterRequestDTO request) {
+        log.info("收到AI流式撰稿请求，话题: {}", request.getTopic());
+        return writerAIService.streamArticle(request);
+    }
+
     /**
      * 基于热点数据撰稿接口
      * 与普通撰稿的区别：请求中携带完整的热点上下文（播放量、互动数据等），

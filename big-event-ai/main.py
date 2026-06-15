@@ -52,36 +52,42 @@ async def health_check():
         current_time=datetime.now()
     )
 
+# ==================== 知识库匹配预览接口 ====================
+
+@app.get("/api/knowledge/match", tags=["知识库"])
+async def match_knowledge(topic: str, limit: int = 5):
+    """知识库匹配预览，返回与话题匹配的参考文章"""
+    try:
+        from shared.knowledge import get_retriever
+        retriever = get_retriever()
+        articles = retriever.retrieve(topic=topic, top_k=limit)
+        return {
+            "matched": len(articles),
+            "articles": [
+                {
+                    "title": a.get("title", ""),
+                    "author": a.get("author", ""),
+                    "category": a.get("category", ""),
+                    "similarity": round(a.get("similarity", 0), 4),
+                    "excerpt": (a.get("excerpt", "") or "")[:200]
+                }
+                for a in articles
+            ]
+        }
+    except Exception as e:
+        return {"matched": 0, "articles": [], "error": str(e)}
+
 # ==================== AI撰稿接口 ====================
 
 @app.post("/api/writer/write", response_model=WriteArticleResponse, tags=["AI撰稿"])
 async def write_article(request: WriteArticleRequest):
-    """
-    AI撰稿接口
-    
-    根据话题生成文章内容
-    
-    参数：
-    - topic: 要撰写的话题或关键词
-    - length: 文章预期长度（默认500字）
-    - style: 文章风格（neutral/formal/casual/technical）
-    - audience: 目标受众（general/professional/student）
-    - references: 参考信息列表（可选）
-    - generate_summary: 是否生成摘要（默认true）
-    
-    返回：
-    - article_id: 文章唯一标识
-    - title: 文章标题
-    - content: 文章内容
-    - summary: 文章摘要（如果请求）
-    - sections: 文章段落结构
-    - generated_at: 生成时间
-    - model_used: 使用的AI模型
-    """
     try:
+        print(f"[调用链-2/4] FastAPI收到撰稿: topic={request.topic}, length={request.length}, style={request.style}")
         result = writer_service.write_article(request)
+        print(f"[调用链-4/4] FastAPI撰稿完成: articleId={result.article_id}, title={result.title}, contentLen={len(result.content)}")
         return result
     except Exception as e:
+        print(f"[调用链-ERROR] 撰稿失败: {e}")
         raise HTTPException(status_code=500, detail=f"文章生成失败: {str(e)}")
 
 @app.post("/api/writer/write/stream", tags=["AI撰稿"])
@@ -118,27 +124,14 @@ async def write_article_stream(request: WriteArticleRequest):
 
 @app.post("/api/writer/write-from-hot", response_model=WriteArticleResponse, tags=["AI撰稿"])
 async def write_article_from_hot(request: WriteFromHotRequest):
-    """
-    基于热点数据撰稿接口
-
-    与普通撰稿接口的区别：请求中包含完整的热点上下文（播放量、互动数据、排名等），
-    AI 将基于这些信息生成更高质量、更贴合热点的文章。
-
-    参数：
-    - title: 热点标题
-    - partition: 一级分区
-    - view_count/like_count/coin_count 等: 互动数据
-    - hot_score: 综合热度评分
-    - rank: 热榜排名
-    - length/style/audience: 文章参数（同普通撰稿）
-
-    返回：
-    - 与普通撰稿接口相同的 WriteArticleResponse
-    """
     try:
+        desc_len = len(request.description) if request.description else 0
+        print(f"[调用链-2/4] FastAPI收到热点撰稿: title={request.title}, score={request.hot_score}, partition={request.partition}, descLen={desc_len}")
         result = writer_service.write_article_from_hot(request)
+        print(f"[调用链-4/4] FastAPI热点撰稿完成: articleId={result.article_id}, title={result.title}, contentLen={len(result.content)}")
         return result
     except Exception as e:
+        print(f"[调用链-ERROR] 热点撰稿失败: {e}")
         raise HTTPException(status_code=500, detail=f"热点文章生成失败: {str(e)}")
 
 

@@ -13,6 +13,25 @@
              #{item.viewCount}, #{item.likeCount}, #{item.coinCount}, #{item.favoriteCount},
              #{item.shareCount}, #{item.danmakuCount}, #{item.replyCount}, #{item.hotScore})
         </foreach>
+        on duplicate key update
+            snapshot_time = values(snapshot_time),
+            title = values(title),
+            url = values(url),
+            cover_url = values(cover_url),
+            author = values(author),
+            tname = values(tname),
+            partition_tag = values(partition_tag),
+            pubdate = values(pubdate),
+            description = values(description),
+            `rank` = values(`rank`),
+            view_count = values(view_count),
+            like_count = values(like_count),
+            coin_count = values(coin_count),
+            favorite_count = values(favorite_count),
+            share_count = values(share_count),
+            danmaku_count = values(danmaku_count),
+            reply_count = values(reply_count),
+            hot_score = values(hot_score)
     </insert>
 
     <select id="getByTimeRange" resultType="com.bubbles.pojo.entity.HotSnapshot">

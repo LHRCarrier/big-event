@@ -3,6 +3,7 @@ package com.bubbles.server.service;
 import com.bubbles.pojo.dto.WriteFromHotRequestDTO;
 import com.bubbles.pojo.dto.WriterRequestDTO;
 import com.bubbles.pojo.dto.WriterResponseDTO;
+import reactor.core.publisher.Flux;
 
 /**
  * AI撰稿服务接口
@@ -14,6 +15,11 @@ public interface WriterAIService {
      * 调用AI撰写文章
      */
     WriterResponseDTO writeArticle(WriterRequestDTO request);
+
+    /**
+     * 流式调用AI撰写文章，返回SSE内容片段
+     */
+    Flux<String> streamArticle(WriterRequestDTO request);
 
     /**
      * 基于热点数据撰写文章（注入完整热点上下文）

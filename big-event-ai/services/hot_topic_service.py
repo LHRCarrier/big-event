@@ -3,8 +3,10 @@
 负责获取平台热点话题并进行分析
 """
 import uuid
+import requests
 from datetime import datetime
 from typing import List
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from config import config
 from schemas.request import AnalyzeHotTopicRequest
 from schemas.response import AnalyzeHotTopicResponse, HotTopic, BiliHotResponse, BiliHotItem
@@ -223,7 +225,9 @@ class HotTopicService:
             
             print(f"[B站热榜] SDK调用成功")
             print(f"[B站热榜] 返回数据: {result}")
-            return self._parse_uapipro_response(result, hot_type)
+            response = self._parse_uapipro_response(result, hot_type)
+            response = self._enrich_descriptions(response)
+            return response
             
         except UapiError as e:
             print(f"[B站热榜] API错误: {e}")
@@ -357,6 +361,77 @@ class HotTopicService:
             source="uapipro"
         )
     
+    # ── 视频简介补充 ──
+
+    MAX_DESC_FETCH = 10
+
+    def _enrich_descriptions(self, response: BiliHotResponse) -> BiliHotResponse:
+        """
+        通过 UApiPro videoinfo API 为缺少简介的热榜条目补充 desc。
+
+        API: GET /api/v1/social/bilibili/videoinfo?bvid=xxx
+        SDK: client.social.get_social_bilibili_videoinfo(bvid=xxx)
+        """
+        need_desc = [
+            item for item in response.items
+            if not item.description and item.bvid
+        ][:self.MAX_DESC_FETCH]
+
+        if not need_desc:
+            return response
+
+        print(f"[B站热榜] 需为 {len(need_desc)} 条热榜补充简介")
+
+        bvid_map = {item.bvid: item for item in need_desc}
+        fetched = 0
+
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            futures = {
+                executor.submit(self._fetch_video_desc, bvid): bvid
+                for bvid in bvid_map
+            }
+            for future in as_completed(futures):
+                bvid = futures[future]
+                try:
+                    desc = future.result()
+                    if desc:
+                        bvid_map[bvid].description = desc
+                        fetched += 1
+                except Exception as e:
+                    print(f"[B站热榜] 获取 {bvid} 简介失败: {e}")
+
+        print(f"[B站热榜] 简介补充完成: {fetched}/{len(need_desc)}")
+        return response
+
+    def _fetch_video_desc(self, bvid: str) -> str:
+        """获取单个视频的简介，优先 SDK，回退 HTTP。"""
+        if self.uapipro_client:
+            try:
+                result = self.uapipro_client.social.get_social_bilibili_videoinfo(bvid=bvid)
+                desc = result.get("desc", "") if isinstance(result, dict) else ""
+                if desc:
+                    print(f"[B站热榜] [SDK] {bvid} 简介: {desc[:60]}...")
+                    return desc
+            except Exception as e:
+                print(f"[B站热榜] [SDK] {bvid} videoinfo 失败: {e}")
+
+        try:
+            url = "https://uapis.cn/api/v1/social/bilibili/videoinfo"
+            params = {"bvid": bvid, "token": config.UAPIPRO_API_KEY}
+            resp = requests.get(url, params=params, timeout=15)
+            if resp.status_code == 200:
+                data = resp.json()
+                desc = data.get("desc", "") if isinstance(data, dict) else ""
+                if desc:
+                    print(f"[B站热榜] [HTTP] {bvid} 简介: {desc[:60]}...")
+                    return desc
+            else:
+                print(f"[B站热榜] [HTTP] {bvid} videoinfo status={resp.status_code}")
+        except Exception as e:
+            print(f"[B站热榜] [HTTP] {bvid} videoinfo 请求失败: {e}")
+
+        return ""
+
     def _get_mock_bilibili_hot(self, hot_type: str = "hot") -> BiliHotResponse:
         """
         获取Mock的B站热榜数据（用于演示和开发测试）

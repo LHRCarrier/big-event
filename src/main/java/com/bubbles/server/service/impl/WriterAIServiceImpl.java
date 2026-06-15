@@ -4,10 +4,14 @@ import com.bubbles.pojo.dto.WriteFromHotRequestDTO;
 import com.bubbles.pojo.dto.WriterRequestDTO;
 import com.bubbles.pojo.dto.WriterResponseDTO;
 import com.bubbles.server.service.WriterAIService;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
@@ -34,39 +38,86 @@ public class WriterAIServiceImpl implements WriterAIService {
     
     @Override
     public WriterResponseDTO writeArticle(WriterRequestDTO request) {
-        log.info("开始调用AI撰稿服务，话题: {}", request.getTopic());
-        
+        long start = System.currentTimeMillis();
+        log.info("[调用链-1/4] Spring→Python 开始撰稿: topic={}, length={}, style={}, audience={}, refs={}",
+                request.getTopic(), request.getLength(), request.getStyle(), request.getAudience(),
+                request.getReferences() != null ? request.getReferences().size() : 0);
+
         try {
-            // 构建请求URL
             String url = aiServiceBaseUrl + "/api/writer/write";
-            
-            // 调用AI服务
+            log.info("[调用链-2/4] POST {} (timeout={}ms)", url, timeout);
+
             Mono<WriterResponseDTO> responseMono = webClient.post()
                     .uri(url)
                     .bodyValue(request)
                     .retrieve()
                     .bodyToMono(WriterResponseDTO.class)
                     .timeout(Duration.ofMillis(timeout));
-            
-            // 阻塞获取结果
+
             WriterResponseDTO response = responseMono.block();
-            
-            log.info("AI撰稿服务调用成功，文章ID: {}", response != null ? response.getArticleId() : "null");
+
+            long elapsed = System.currentTimeMillis() - start;
+            if (response != null) {
+                log.info("[调用链-3/4] Python返回成功: articleId={}, title={}, contentLen={}, model={}, elapsed={}ms",
+                        response.getArticleId(), response.getTitle(),
+                        response.getContent() != null ? response.getContent().length() : 0,
+                        response.getModelUsed(), elapsed);
+            } else {
+                log.warn("[调用链-3/4] Python返回null, elapsed={}ms", elapsed);
+            }
             return response;
-            
+
         } catch (Exception e) {
-            log.error("调用AI撰稿服务失败", e);
-            // 返回Mock数据或抛出异常
+            long elapsed = System.currentTimeMillis() - start;
+            log.error("[调用链-3/4] Python调用失败, elapsed={}ms, error={}", elapsed, e.getMessage());
             return generateMockResponse(request.getTopic());
         }
     }
     
     @Override
+    public Flux<String> streamArticle(WriterRequestDTO request) {
+        String url = aiServiceBaseUrl + "/api/writer/write/stream";
+        log.info("[SSE流式] 开始流式撰稿: topic={}, length={}, style={}, useKnowledge={}",
+                request.getTopic(), request.getLength(), request.getStyle(), request.getUseKnowledge());
+
+        return webClient.post()
+                .uri(url)
+                .bodyValue(request)
+                .accept(MediaType.TEXT_EVENT_STREAM)
+                .retrieve()
+                .bodyToFlux(String.class)
+                .map(this::extractContentFromSSE)
+                .timeout(Duration.ofMillis(timeout))
+                .onErrorResume(e -> {
+                    log.error("[SSE流式] 传输中断: {}", e.getMessage());
+                    return Flux.just("\n\n[流式传输中断: " + e.getMessage() + "]");
+                });
+    }
+
+    private String extractContentFromSSE(String sseData) {
+        try {
+            String json = sseData;
+            if (json.startsWith("data: ")) {
+                json = json.substring(6);
+            }
+            JsonNode node = new ObjectMapper().readTree(json);
+            JsonNode content = node.get("content");
+            return content != null ? content.asText() : "";
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    @Override
     public WriterResponseDTO writeFromHot(WriteFromHotRequestDTO request) {
-        log.info("开始调用AI热点撰稿服务，标题: {}", request.getTitle());
+        long start = System.currentTimeMillis();
+        log.info("[调用链-1/4] Spring→Python 热点撰稿: title={}, score={}, partition={}, descLen={}",
+                request.getTitle(), request.getHotScore(), request.getPartition(),
+                request.getDescription() != null ? request.getDescription().length() : 0);
 
         try {
             String url = aiServiceBaseUrl + "/api/writer/write-from-hot";
+            log.info("[调用链-2/4] POST {} (timeout={}ms)", url, timeout);
 
             Mono<WriterResponseDTO> responseMono = webClient.post()
                     .uri(url)
@@ -77,12 +128,20 @@ public class WriterAIServiceImpl implements WriterAIService {
 
             WriterResponseDTO response = responseMono.block();
 
-            log.info("AI热点撰稿服务调用成功，文章ID: {}", response != null ? response.getArticleId() : "null");
+            long elapsed = System.currentTimeMillis() - start;
+            if (response != null) {
+                log.info("[调用链-3/4] Python热点撰稿返回: articleId={}, title={}, contentLen={}, model={}, elapsed={}ms",
+                        response.getArticleId(), response.getTitle(),
+                        response.getContent() != null ? response.getContent().length() : 0,
+                        response.getModelUsed(), elapsed);
+            } else {
+                log.warn("[调用链-3/4] Python热点撰稿返回null, elapsed={}ms", elapsed);
+            }
             return response;
 
         } catch (Exception e) {
-            log.error("调用AI热点撰稿服务失败，降级到普通撰稿", e);
-            // fallback: 用标题作为 topic 调普通撰稿
+            long elapsed = System.currentTimeMillis() - start;
+            log.error("[调用链-3/4] Python热点撰稿失败, elapsed={}ms, error={}", elapsed, e.getMessage());
             WriterRequestDTO fallbackReq = WriterRequestDTO.builder()
                     .topic(request.getTitle())
                     .length(request.getLength() != null ? request.getLength() : 800)

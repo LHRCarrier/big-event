@@ -102,7 +102,7 @@ create table hot_snapshot (
     index idx_snapshot_time (snapshot_time),
     index idx_bvid (bvid),
     index idx_partition (partition_tag),
-    unique key uk_snapshot_bvid (snapshot_time, bvid)
+    unique key uk_snapshot_bvid (bvid)
 ) comment '热点快照表-B站热榜历史记录';
 
 -- ==================== 平台化架构 V2 ====================
@@ -173,3 +173,32 @@ create table ai_process_record (
 -- 注意：如果列已存在会报错（Duplicate column），跳过即可
 ALTER TABLE hot_snapshot ADD COLUMN pubdate     datetime comment '视频发布时间（来自B站extra.pubdate）' AFTER partition_tag;
 ALTER TABLE hot_snapshot ADD COLUMN description text     comment '视频简介（来自B站extra.desc）'      AFTER pubdate;
+
+-- ==================== V2.2 知识库 ====================
+
+-- 知识库文章表（用于AI撰稿时提供风格参考和事实素材，减少AI味）
+create table knowledge_article (
+    id          bigint unsigned primary key auto_increment comment 'ID',
+    title       varchar(200)   not null comment '文章标题',
+    content     mediumtext     not null comment '全文（Markdown）',
+    excerpt     varchar(500)   default null comment '摘要/核心观点',
+    category    varchar(50)    default null comment '分类（科技/社会/娱乐/教育...）',
+    tags        varchar(500)   default null comment '逗号分隔标签',
+    author      varchar(100)   default null comment '原作者名',
+    source_url  varchar(500)   default null comment '来源链接',
+    quality     tinyint        default 3 comment '质量评级 1-5',
+    word_count  int            default 0 comment '字数',
+    status      tinyint        default 1 comment '1=启用 0=停用',
+    created_at  datetime       default current_timestamp comment '创建时间',
+    updated_at  datetime       default current_timestamp on update current_timestamp comment '修改时间',
+    index idx_category (category),
+    index idx_status (status),
+    index idx_quality (quality)
+) comment '知识库文章表-用于AI撰稿风格参考';
+
+-- ==================== V2.3 hot_snapshot 去重改造 ====================
+
+-- 将 hot_snapshot 唯一键从 (snapshot_time, bvid) 改为 (bvid)，实现 upsert
+-- 注意：执行前会清空已有数据（因为历史快照不再需要，趋势分析已迁移到 raw_signal）
+ALTER TABLE hot_snapshot DROP INDEX uk_snapshot_bvid;
+ALTER TABLE hot_snapshot ADD UNIQUE KEY uk_snapshot_bvid (bvid);

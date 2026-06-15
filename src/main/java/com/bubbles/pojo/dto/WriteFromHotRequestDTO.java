@@ -41,4 +41,7 @@ public class WriteFromHotRequestDTO {
     @JsonProperty("generate_summary")
     private Boolean generateSummary;
     private String description;
+    @JsonProperty("use_knowledge")
+    @Builder.Default
+    private Boolean useKnowledge = true;
 }

@@ -23,10 +23,10 @@ public class WriterRequestDTO {
     private String topic;
     
     /**
-     * 文章预期长度（字数），默认500
+     * 文章预期长度（字数），null表示不限制
      */
     @Builder.Default
-    private Integer length = 500;
+    private Integer length = null;
     
     /**
      * 文章风格：neutral(中性)/formal(正式)/casual(轻松)/technical(技术)
@@ -51,4 +51,10 @@ public class WriterRequestDTO {
      */
     @Builder.Default
     private Boolean generateSummary = true;
+
+    /**
+     * 是否使用知识库检索高质量参考文章作为风格锚点
+     */
+    @Builder.Default
+    private Boolean useKnowledge = true;
 }

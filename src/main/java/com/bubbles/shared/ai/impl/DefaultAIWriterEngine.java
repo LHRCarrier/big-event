@@ -51,6 +51,7 @@ public class DefaultAIWriterEngine implements AIWriterEngine {
                 .length(strategy.maxLength())
                 .style("neutral")
                 .audience("general")
+                .description(getString(metrics, "description"))
                 .generateSummary(true)
                 .build();
 
@@ -98,5 +99,11 @@ public class DefaultAIWriterEngine implements AIWriterEngine {
         Object v = map.get(key);
         if (v instanceof Number n) return n.longValue();
         return 0L;
+    }
+
+    private String getString(java.util.Map<String, Object> map, String key) {
+        Object v = map.get(key);
+        if (v instanceof String s && !s.isBlank()) return s;
+        return null;
     }
 }

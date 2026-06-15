@@ -4,8 +4,11 @@ B站热点爬虫 —— 通过 UApiPro SDK 获取B站热榜数据
 从原 hot_topic_service.py 中提取，作为模块化架构的采集层。
 """
 import random
+import time
+import requests
 from datetime import datetime
 from typing import List, Optional
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from config import config
 from schemas.response import BiliHotResponse, BiliHotItem
@@ -21,6 +24,9 @@ except ImportError:
 
 class BilibiliCrawler:
     """B站热点采集器 —— 负责原始数据获取与格式转换"""
+
+    # 每次最多为多少条热榜补充简介（避免 API 调用过频）
+    MAX_DESC_FETCH = 10
 
     def __init__(self):
         self.uapipro_client: Optional[UapiClient] = None
@@ -43,7 +49,9 @@ class BilibiliCrawler:
             result = self.uapipro_client.misc.get_misc_hotboard(
                 type="bilibili", limit=limit
             )
-            return self._parse_response(result, hot_type)
+            response = self._parse_response(result, hot_type)
+            response = self._enrich_descriptions(response)
+            return response
         except (UapiError, Exception) as e:
             print(f"[B站爬虫] 获取失败: {e}，降级 Mock")
             return self._mock(hot_type, limit)
@@ -59,6 +67,14 @@ class BilibiliCrawler:
             data_list = api_data["list"]
         elif "data" in api_data:
             data_list = api_data["data"]
+
+        # 调试：打印第一个item看desc是否存在
+        if data_list:
+            s = data_list[0]
+            se = s.get("extra", {})
+            print(f"[B站爬虫] item字段: {list(s.keys())}")
+            print(f"[B站爬虫] extra字段: {list(se.keys())}")
+            print(f"[B站爬虫] desc={se.get('desc', s.get('desc', '【无】'))[:100]}")
 
         for idx, item in enumerate(data_list[:20], 1):
             extra = item.get("extra", {})
@@ -91,7 +107,7 @@ class BilibiliCrawler:
                 except (ValueError, TypeError, OSError):
                     pass
 
-            # 视频简介
+            # 视频简介（热榜 API 不返回 desc，需通过 videoinfo API 补充）
             description = extra.get("desc", "") or item.get("desc", "")
 
             items.append(BiliHotItem(
@@ -119,6 +135,78 @@ class BilibiliCrawler:
             items=items,
             source="uapipro",
         )
+
+    # ── 视频简介补充 ──
+
+    def _enrich_descriptions(self, response: BiliHotResponse) -> BiliHotResponse:
+        """
+        通过 UApiPro videoinfo API 为缺少简介的热榜条目补充 desc。
+
+        API: GET /api/v1/social/bilibili/videoinfo?bvid=xxx
+        SDK: client.social.get_social_bilibili_videoinfo(bvid=xxx)
+        响应: desc 字段位于顶层，desc_v2 为结构化片段。
+        """
+        need_desc = [
+            item for item in response.items
+            if not item.description and item.bvid
+        ][:self.MAX_DESC_FETCH]
+
+        if not need_desc:
+            return response
+
+        print(f"[B站爬虫] 需为 {len(need_desc)} 条热榜补充简介")
+
+        bvid_map = {item.bvid: item for item in need_desc}
+        fetched = 0
+
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            futures = {
+                executor.submit(self._fetch_video_desc, bvid): bvid
+                for bvid in bvid_map
+            }
+            for future in as_completed(futures):
+                bvid = futures[future]
+                try:
+                    desc = future.result()
+                    if desc:
+                        bvid_map[bvid].description = desc
+                        fetched += 1
+                except Exception as e:
+                    print(f"[B站爬虫] 获取 {bvid} 简介失败: {e}")
+
+        print(f"[B站爬虫] 简介补充完成: {fetched}/{len(need_desc)}")
+        return response
+
+    def _fetch_video_desc(self, bvid: str) -> str:
+        """获取单个视频的简介，优先 SDK，回退 HTTP。"""
+        if self.uapipro_client:
+            try:
+                result = self.uapipro_client.social.get_social_bilibili_videoinfo(bvid=bvid)
+                desc = result.get("desc", "") if isinstance(result, dict) else ""
+                if desc:
+                    print(f"[B站爬虫] [SDK] {bvid} 简介: {desc[:60]}...")
+                    return desc
+            except Exception as e:
+                print(f"[B站爬虫] [SDK] {bvid} videoinfo 失败: {e}")
+
+        try:
+            url = "https://uapis.cn/api/v1/social/bilibili/videoinfo"
+            params = {"bvid": bvid, "token": config.UAPIPRO_API_KEY}
+            resp = requests.get(url, params=params, timeout=15)
+            if resp.status_code == 200:
+                data = resp.json()
+                desc = data.get("desc", "") if isinstance(data, dict) else ""
+                if desc:
+                    print(f"[B站爬虫] [HTTP] {bvid} 简介: {desc[:60]}...")
+                    return desc
+            else:
+                print(f"[B站爬虫] [HTTP] {bvid} videoinfo status={resp.status_code}")
+        except Exception as e:
+            print(f"[B站爬虫] [HTTP] {bvid} videoinfo 请求失败: {e}")
+
+        return ""
+
+    # ── Mock ──
 
     def _mock(self, hot_type: str, limit: int) -> BiliHotResponse:
         """Mock 数据（开发测试用）"""

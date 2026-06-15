@@ -6,6 +6,7 @@ AI撰稿核心服务
 1. 使用 requests 库直接调用AI接口，绕过OpenAI SDK的代理兼容性问题
 2. 支持 SiliconFlow API（DeepSeek等模型）
 3. 当AI服务不可用时，返回Mock数据
+4. Phase 2: 集成知识库检索，为文章注入风格参考，减少AI味
 """
 import uuid
 import json
@@ -15,6 +16,18 @@ import requests
 from config import config
 from schemas.request import WriteArticleRequest, WriteFromHotRequest
 from schemas.response import WriteArticleResponse, ArticleSection
+
+# 知识库模块
+try:
+    from shared.knowledge.retriever import get_retriever
+    from shared.knowledge.prompt_builder import (
+        build_prompt_with_knowledge,
+        build_hot_prompt_with_knowledge,
+    )
+    _knowledge_available = True
+except ImportError as e:
+    print(f"[WriterService] 知识库模块加载失败: {e}")
+    _knowledge_available = False
 
 class WriterService:
     """
@@ -39,18 +52,21 @@ class WriterService:
         - str: 生成的文章内容
 
         实现说明：
-        1. 构建prompt提示词
+        1. 构建prompt提示词（优先使用知识库注入）
         2. 调用SiliconFlow API生成内容
         3. 处理响应并提取文章内容
         """
         try:
-            print(f"[WriterService] 开始调用AI模型: {config.OPENAI_MODEL}")
+            print(f"[调用链-3/4] WriterService 构建prompt + 调用AI: model={config.OPENAI_MODEL}")
 
             # 构建风格描述
             style_map = {
                 "neutral": "中立客观",
                 "formal": "正式严谨",
                 "casual": "轻松活泼",
+                "literary": "文学诗意，多用比喻、意象和优美的语言",
+                "journalistic": "新闻纪实，客观真实，注重事实和数据",
+                "sharp": "犀利锐评，观点鲜明，语言精炼有力",
                 "technical": "专业技术"
             }
 
@@ -60,23 +76,48 @@ class WriterService:
                 "student": "学生群体"
             }
 
-            # 构建提示词
-            system_prompt = f"""你是一位专业的撰稿人，擅长撰写各类话题的文章。
+            # 构建提示词（优先使用知识库注入）
+            extra_context = ""
+            if request.references:
+                extra_context = "参考信息：\n" + "\n".join(request.references)
+
+            knowledge_articles = []
+            if _knowledge_available and getattr(request, 'use_knowledge', True):
+                try:
+                    retriever = get_retriever()
+                    knowledge_articles = retriever.retrieve(
+                        topic=request.topic,
+                        top_k=config.KNOWLEDGE_TOP_K
+                    )
+                except Exception as e:
+                    print(f"[WriterService] 知识库检索跳过: {e}")
+
+            if knowledge_articles:
+                system_prompt = build_prompt_with_knowledge(
+                    topic=request.topic,
+                    length=request.length,
+                    style=request.style or "neutral",
+                    audience=request.audience or "general",
+                    knowledge_articles=knowledge_articles,
+                    extra_context=extra_context
+                )
+                print(f"[调用链-3/4] 知识库注入: {len(knowledge_articles)}篇参考, prompt总长度={len(system_prompt)}")
+            else:
+                print(f"[调用链-3/4] 知识库无匹配, 使用默认prompt")
+                length_req = f"文章长度约{request.length}字" if request.length else "文章长度不限（最长5000字）"
+                system_prompt = f"""你是一位专业的撰稿人，擅长撰写各类话题的文章。
 请根据以下要求撰写一篇关于「{request.topic}」的文章：
 
 要求：
-1. 文章长度约{request.length}字
+1. {length_req}
 2. 风格：{style_map.get(request.style, "中立客观")}
 3. 目标受众：{audience_map.get(request.audience, "普通大众")}
 4. 结构清晰，有引言、正文和结论
 5. 内容准确，逻辑严谨
 
 请直接输出文章内容，使用Markdown格式，不需要额外解释。"""
-
-            # 如果有参考信息，添加到prompt中
-            if request.references:
-                references_text = "\n参考信息：\n" + "\n".join(request.references)
-                system_prompt += references_text
+                if extra_context:
+                    system_prompt += "\n" + extra_context
 
             # 构建API请求
             url = f"{config.OPENAI_BASE_URL}/v1/chat/completions"
@@ -90,7 +131,7 @@ class WriterService:
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": f"请撰写一篇关于「{request.topic}」的文章。"}
                 ],
-                "max_tokens": request.length * 2,
+                "max_tokens": (request.length or 5000) * 2,
                 "temperature": 0.7
             }
 
@@ -101,7 +142,7 @@ class WriterService:
                 url,
                 headers=headers,
                 json=payload,
-                timeout=60,
+                timeout=300,
                 proxies={"http": None, "https": None}
             )
 
@@ -110,7 +151,8 @@ class WriterService:
             if response.status_code == 200:
                 result = response.json()
                 content = result["choices"][0]["message"]["content"]
-                print(f"[WriterService] 成功获取AI生成内容，长度: {len(content)}")
+                usage = result.get("usage", {})
+                print(f"[调用链-3/4] AI返回成功: contentLen={len(content)}, promptTokens={usage.get('prompt_tokens','?')}, completionTokens={usage.get('completion_tokens','?')}")
                 return content.strip()
             else:
                 print(f"[WriterService] API调用失败: {response.status_code} - {response.text}")
@@ -158,7 +200,7 @@ class WriterService:
                 url,
                 headers=headers,
                 json=payload,
-                timeout=30,
+                timeout=180,
                 proxies={"http": None, "https": None}
             )
 
@@ -310,11 +352,47 @@ class WriterService:
 
         核心改进：将视频简介(desc)作为主要素材来源，让 AI 基于真实内容展开，
         而非仅凭标题臆测。简介提供事实和细节，标题和互动数据提供选题热度佐证。
+
+        Phase 2: 集成知识库风格注入。
         """
+        # 先尝试知识库注入
+        if _knowledge_available and getattr(request, 'use_knowledge', True):
+            try:
+                retriever = get_retriever()
+                knowledge_articles = retriever.retrieve(
+                    topic=request.title,
+                    category=request.partition,
+                    top_k=config.KNOWLEDGE_TOP_K
+                )
+                if knowledge_articles:
+                    prompt = build_hot_prompt_with_knowledge(
+                        title=request.title,
+                        partition=request.partition,
+                        author=request.author,
+                        view_count=request.view_count,
+                        like_count=request.like_count,
+                        favorite_count=request.favorite_count,
+                        share_count=request.share_count,
+                        hot_score=request.hot_score,
+                        description=request.description or "",
+                        length=request.length,
+                        style=request.style or "neutral",
+                        audience=request.audience or "general",
+                        knowledge_articles=knowledge_articles
+                    )
+                    print(f"[调用链-3/4] 知识库注入: {len(knowledge_articles)}篇参考, prompt总长度={len(prompt)}")
+                    return prompt
+            except Exception as e:
+                print(f"[WriterService] 热点知识库检索跳过: {e}")
+
+        # 回退到原始 prompt
         style_map = {
             "neutral": "中立客观，新闻体风格",
             "formal": "正式严谨，深度分析风格",
             "casual": "轻松活泼，自媒体风格",
+            "literary": "文学诗意，散文风格，多用比喻和意象",
+            "journalistic": "新闻纪实，客观真实，事实+数据驱动",
+            "sharp": "犀利锐评，观点鲜明，语言精炼，有态度",
             "technical": "专业技术，行业洞察风格"
         }
         audience_map = {
@@ -323,24 +401,22 @@ class WriterService:
             "student": "学生群体"
         }
 
-        # 有简介时：简介作为核心素材，标题作为选题方向
         if request.description and len(request.description.strip()) >= 20:
             material_section = f"""## 核心素材（文章必须基于以下内容展开）
 {request.description}
 
 以上是该热点事件的核心信息/简介，是撰写文章的主要素材来源。
 请仔细阅读，从中提取关键事实、数据、观点，据此构建文章的主体内容。"""
-
-        # 无简介或简介过短时：回退到仅用标题+互动数据
         else:
             material_section = f"""## 选题信息（请围绕该话题展开文章）
 - 热点标题：{request.title}
 - 注意：该话题缺乏详细素材，请基于你的知识库进行客观专业的介绍和分析"""
 
+        length_req = f"约 {request.length} 字" if request.length else "不限（最长5000字）"
         prompt = f"""你是一位专业的自媒体撰稿人，擅长基于热点事件撰写深度文章。
 
 ## 写作要求
-- 文章长度：约 {request.length} 字
+- 文章长度：{length_req}
 - 风格：{style_map.get(request.style, "中立客观")}
 - 目标受众：{audience_map.get(request.audience, "普通大众")}
 - 文章需要有吸引力的标题、引言、正文分论点（2-3个）、结语
@@ -399,14 +475,15 @@ class WriterService:
                 url,
                 headers=headers,
                 json=payload,
-                timeout=120,
+                timeout=300,
                 proxies={"http": None, "https": None}
             )
 
             if response.status_code == 200:
                 result = response.json()
                 content = result["choices"][0]["message"]["content"]
-                print(f"[WriterService] 热点撰稿成功, 长度: {len(content)}")
+                usage = result.get("usage", {})
+                print(f"[调用链-3/4] AI热点返回成功: contentLen={len(content)}, promptTokens={usage.get('prompt_tokens','?')}, completionTokens={usage.get('completion_tokens','?')}")
 
                 # 提取标题
                 title = request.title
@@ -488,6 +565,9 @@ class WriterService:
                 "neutral": "中立客观",
                 "formal": "正式严谨",
                 "casual": "轻松活泼",
+                "literary": "文学诗意，多用比喻、意象和优美的语言",
+                "journalistic": "新闻纪实，客观真实，注重事实和数据",
+                "sharp": "犀利锐评，观点鲜明，语言精炼有力",
                 "technical": "专业技术"
             }
 
@@ -497,25 +577,50 @@ class WriterService:
                 "student": "学生群体"
             }
 
-            # 构建提示词
-            system_prompt = f"""你是一位专业的撰稿人，擅长撰写各类话题的文章。
+            # 构建提示词（优先使用知识库注入）
+            extra_context = ""
+            if request.references:
+                extra_context = "参考信息：\n" + "\n".join(request.references)
+
+            knowledge_articles = []
+            if _knowledge_available and getattr(request, 'use_knowledge', True):
+                try:
+                    retriever = get_retriever()
+                    knowledge_articles = retriever.retrieve(
+                        topic=request.topic,
+                        top_k=config.KNOWLEDGE_TOP_K
+                    )
+                except Exception as e:
+                    print(f"[WriterService] 知识库检索跳过: {e}")
+
+            if knowledge_articles:
+                system_prompt = build_prompt_with_knowledge(
+                    topic=request.topic,
+                    length=request.length,
+                    style=request.style or "neutral",
+                    audience=request.audience or "general",
+                    knowledge_articles=knowledge_articles,
+                    extra_context=extra_context
+                )
+                print(f"[WriterService] 流式撰稿已注入 {len(knowledge_articles)} 篇知识库参考文章")
+            else:
+                length_req = f"文章长度约{request.length}字" if request.length else "文章长度不限（最长5000字）"
+                system_prompt = f"""你是一位专业的撰稿人，擅长撰写各类话题的文章。
 请根据以下要求撰写一篇关于「{request.topic}」的文章：
 
 要求：
-1. 文章长度约{request.length}字
+1. {length_req}
 2. 风格：{style_map.get(request.style, "中立客观")}
 3. 目标受众：{audience_map.get(request.audience, "普通大众")}
 4. 结构清晰，有引言、正文和结论
 5. 内容准确，逻辑严谨
 
 请直接输出文章内容，使用Markdown格式，不需要额外解释。"""
-
-            # 如果有参考信息，添加到prompt中
-            if request.references:
-                references_text = "\n参考信息：\n" + "\n".join(request.references)
-                system_prompt += references_text
+                if extra_context:
+                    system_prompt += "\n" + extra_context
 
             # 构建API请求
+            max_tokens = (request.length or 5000) * 2
             url = f"{config.OPENAI_BASE_URL}/v1/chat/completions"
             headers = {
                 "Authorization": f"Bearer {config.OPENAI_API_KEY}",
@@ -527,7 +632,7 @@ class WriterService:
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": f"请撰写一篇关于「{request.topic}」的文章。"}
                 ],
-                "max_tokens": request.length * 2,
+                "max_tokens": max_tokens,
                 "temperature": 0.7,
                 "stream": True
             }
@@ -539,7 +644,7 @@ class WriterService:
                 url,
                 headers=headers,
                 json=payload,
-                timeout=120,
+                timeout=600,
                 proxies={"http": None, "https": None},
                 stream=True
             )
